@@ -1,9 +1,12 @@
+import streamlit as st
 import pandas as pd
 import numpy as np
-import streamlit as st
 import locale
 
-# Attempt to set locale to US English as a fallback
+# Set Streamlit Page Config First
+st.set_page_config(page_title="Finance Advisor", layout="centered")
+
+# Attempt to set locale
 try:
     locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 except locale.Error:
