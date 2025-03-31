@@ -1,120 +1,136 @@
-import streamlit as st
-import pandas as pd
 import numpy as np
-import locale
+import streamlit as st
 
-# Set Streamlit Page Config First
-st.set_page_config(page_title="Finance Advisor", layout="centered")
+def get_percentile(user_value, national_average, national_std_dev):
+    """Calculate the percentile ranking of the user's value compared to national data."""
+    if national_std_dev == 0:
+        return 50  # If there's no variation, assume user is average
+    z_score = (user_value - national_average) / national_std_dev
+    percentile = round(100 * (1 - 0.5 * (1 + np.math.erf(z_score / np.sqrt(2)))), 2)
+    return max(1, min(100, percentile))  # Ensure percentile stays between 1 and 100
 
-# Attempt to set locale to US English as a fallback
-try:
-    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
-except locale.Error:
-    st.warning("Locale not supported. Using default settings.")
+def financial_report():
+    st.set_page_config(page_title="Finance Advisor", page_icon="💰", layout="centered")
+    st.title("💰 Finance Advisor")
 
-st.markdown("""
-    <style>
-    body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; }
-    .stButton>button { background-color: #000000; color: white; border-radius: 5px; }
-    .stSlider .css-1cpxqw2 { color: #000000; }
-    .stNumberInput input { color: #000000; }
-    </style>
-""", unsafe_allow_html=True)
+    st.sidebar.header("User Input")
+    
+    # User inputs with validation
+    income = st.sidebar.number_input("Monthly Income (Before Taxes): $", min_value=0.0, format="%.2f")
+    expenses = st.sidebar.number_input("Monthly Expenses: $", min_value=0.0, format="%.2f")
+    savings = st.sidebar.number_input("Total Savings: $", min_value=0.0, format="%.2f")
+    investments = st.sidebar.number_input("Total Investments: $", min_value=0.0, format="%.2f")
+    age = st.sidebar.number_input("Age: ", min_value=0)
+    
+    st.sidebar.markdown("**Tax Rates**")
+    federal_tax = st.sidebar.number_input("Federal Tax Rate (%)", min_value=0.0, max_value=100.0)
+    state_tax = st.sidebar.number_input("State Tax Rate (%)", min_value=0.0, max_value=100.0)
+    local_tax = st.sidebar.number_input("Local Tax Rate (%)", min_value=0.0, max_value=100.0)
+    
+    credit_score = st.sidebar.number_input("Credit Score (300-850):", min_value=300, max_value=850)
 
-class FinanceAdvisor:
-    def __init__(self):
-        self.income = 0
-        self.expenses = 0
-        self.savings = 0
-        self.investments = 0
-        self.federal_tax = 0.0
-        self.state_tax = 0.0
-        self.local_tax = 0.0
-        self.credit_score = 0
+    st.sidebar.markdown("**Financial Goals**")
+    savings_goal = st.sidebar.number_input("Savings Goal ($):", min_value=0.0, format="%.2f")
+    investment_goal = st.sidebar.number_input("Investment Goal ($):", min_value=0.0, format="%.2f")
+    debt = st.sidebar.number_input("Current Debt ($):", min_value=0.0, format="%.2f")
 
-    def collect_user_data(self):
-        st.title("Finance Advisor")
-        st.write("Welcome! Enter your financial information below to receive insights and personalized advice.")
+    # National averages and standard deviations for comparison
+    national_averages = {
+        "income": 5000, "expenses": 3500, "savings": 25000, "investments": 40000,
+        "credit_score": 710, "net_worth": 100000, "debt": 20000, "emergency_fund": 15000,
+        "savings_rate": 0.15, "investment_rate": 0.2
+    }
+    national_std_dev = {
+        "income": 2000, "expenses": 1500, "savings": 15000, "investments": 30000,
+        "credit_score": 40, "net_worth": 50000, "debt": 10000, "emergency_fund": 8000,
+        "savings_rate": 0.1, "investment_rate": 0.1
+    }
 
-        # Input with descriptions
-        with st.expander("Income & Expenses Details"):
-            self.income = st.number_input("Monthly Income (before taxes):", min_value=0.0)
-            self.expenses = st.number_input("Monthly Expenses:", min_value=0.0)
-            self.savings = st.number_input("Total Savings:", min_value=0.0)
-            self.investments = st.number_input("Total Investments:", min_value=0.0)
+    # Financial Calculations
+    net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
+    net_worth = savings + investments
+    debt_to_income_ratio = debt / income * 100  # Debt-to-income ratio as percentage
+    emergency_fund = min(savings / (expenses / 12), 12)  # Capped at 12 months of expenses
+    savings_rate = savings / (income * 12)
+    investment_rate = investments / (income * 12)
 
-        with st.expander("Tax Information"):
-            self.federal_tax = st.slider("Federal Tax Rate (%)", 0, 50, 7) / 100
-            self.state_tax = st.slider("State Tax Rate (%)", 0, 50, 15) / 100
-            self.local_tax = st.slider("Local Tax Rate (%)", 0, 50, 20) / 100
+    # Percentile Calculations
+    percentiles = {
+        "income": get_percentile(income, national_averages["income"], national_std_dev["income"]),
+        "expenses": get_percentile(expenses, national_averages["expenses"], national_std_dev["expenses"]),
+        "savings": get_percentile(savings, national_averages["savings"], national_std_dev["savings"]),
+        "investments": get_percentile(investments, national_averages["investments"], national_std_dev["investments"]),
+        "credit_score": get_percentile(credit_score, national_averages["credit_score"], national_std_dev["credit_score"]),
+        "net_worth": get_percentile(net_worth, national_averages["net_worth"], national_std_dev["net_worth"]),
+        "debt": get_percentile(debt, national_averages["debt"], national_std_dev["debt"]),
+        "emergency_fund": get_percentile(emergency_fund, national_averages["emergency_fund"], national_std_dev["emergency_fund"]),
+        "savings_rate": get_percentile(savings_rate, national_averages["savings_rate"], national_std_dev["savings_rate"]),
+        "investment_rate": get_percentile(investment_rate, national_averages["investment_rate"], national_std_dev["investment_rate"])
+    }
 
-        with st.expander("Credit Score and Additional Info"):
-            self.credit_score = st.number_input("Credit Score (300-850):", min_value=300, max_value=850, value=700)
+    # Age-based comparison
+    national_net_worth_by_age = {20: 5000, 30: 35000, 40: 80000, 50: 150000, 60: 250000}
+    closest_age = min(national_net_worth_by_age.keys(), key=lambda x: abs(x - age))
+    age_comparison = get_percentile(net_worth, national_net_worth_by_age[closest_age], national_std_dev["net_worth"])
 
-        if st.button("Generate Financial Report"):
-            self.generate_financial_report()
+    # Financial Predictions (2, 5, 10 years)
+    income_growth_rate = 0.03  # 3% annual growth in income
+    savings_growth_rate = 0.15  # User saves 15% of net income
+    investment_growth_rate = 0.06  # 6% annual return on investments
+    debt_reduction_rate = 0.05  # Reduce debt by 5% per year
+    credit_score_improvement = 5  # Improve credit score by 5 points per year
 
-    def safe_currency(self, value):
-        try:
-            return locale.currency(value, grouping=True)
-        except ValueError:
-            return f"${value:,.2f}"  # Fallback to basic USD format
+    def forecast_years(years):
+        """Forecast the financial situation in the future (2, 5, 10 years)."""
+        future_income = income * ((1 + income_growth_rate) ** years)
+        future_savings = savings + (net_income * savings_growth_rate * 12 * years)
+        future_investments = investments * ((1 + investment_growth_rate) ** years)
+        future_debt = debt * ((1 - debt_reduction_rate) ** years)
+        future_credit_score = credit_score + (credit_score_improvement * years)
+        future_net_worth = future_savings + future_investments - future_debt
+        future_emergency_fund = future_savings / (expenses / 12)  # Months worth of future savings
+        
+        return {
+            "future_income": future_income,
+            "future_savings": future_savings,
+            "future_investments": future_investments,
+            "future_debt": future_debt,
+            "future_credit_score": future_credit_score,
+            "future_net_worth": future_net_worth,
+            "future_emergency_fund": future_emergency_fund
+        }
 
-    def generate_financial_report(self):
-        total_tax_rate = self.federal_tax + self.state_tax + self.local_tax
-        net_income = self.income * (1 - total_tax_rate)
-        surplus = net_income - self.expenses
-        net_worth = self.savings + self.investments
+    # Projections for 2, 5, and 10 years
+    projections = {
+        "2_years": forecast_years(2),
+        "5_years": forecast_years(5),
+        "10_years": forecast_years(10)
+    }
 
-        st.subheader("Your Financial Report")
-        st.write(f"**Gross Monthly Income:** {self.safe_currency(self.income)}")
-        st.write(f"**Net Monthly Income After Taxes:** {self.safe_currency(net_income)}")
-        st.write(f"**Monthly Expenses:** {self.safe_currency(self.expenses)}")
-        st.write(f"**Total Savings:** {self.safe_currency(self.savings)}")
-        st.write(f"**Total Investments:** {self.safe_currency(self.investments)}")
-        st.write(f"**Credit Score:** {self.credit_score}")
-        st.write(f"**Net Worth:** {self.safe_currency(net_worth)}")
+    st.subheader("Your Financial Overview")
+    st.markdown(f"**Net Monthly Income**: ${net_income:,.2f}")
+    st.markdown(f"**Net Worth**: ${net_worth:,.2f}")
+    st.markdown(f"**Emergency Fund**: {emergency_fund:.2f} months of expenses")
+    st.markdown(f"**Debt-to-Income Ratio**: {debt_to_income_ratio:.2f}%")
+    
+    st.subheader("Percentiles Comparison")
+    st.write("Here’s how your financial situation compares to the national averages:")
+    for key, percentile in percentiles.items():
+        st.write(f"{key.capitalize()}: **{percentile}th percentile**")
+    
+    st.write(f"**Your net worth compared to your age group**: {age_comparison}th percentile")
 
-        expense_to_income_ratio = (self.expenses / self.income) * 100 if self.income else 0
-        savings_to_income_ratio = (self.savings / self.income) * 100 if self.income else 0
-        investment_to_net_worth_ratio = (self.investments / net_worth) * 100 if net_worth else 0
-        tax_burden = total_tax_rate * 100
-
-        st.subheader("Additional Financial Statistics")
-        st.write(f"**Expense to Income Ratio:** {expense_to_income_ratio:.2f}%")
-        st.write(f"**Savings to Income Ratio:** {savings_to_income_ratio:.2f}%")
-        st.write(f"**Investment to Net Worth Ratio:** {investment_to_net_worth_ratio:.2f}%")
-        st.write(f"**Tax Burden:** {tax_burden:.2f}%")
-
-        self.financial_health_grade(net_income, net_worth, surplus)
-        st.write(self.generate_advice(surplus, net_worth))
-
-    def generate_advice(self, surplus, net_worth):
-        if surplus < 0:
-            return "You are spending more than you earn. Consider reducing expenses or increasing your income."
-        elif net_worth < 50000:
-            return "Your net worth is growing, but consider increasing investments or reducing expenses."
-        else:
-            return "You are in excellent financial health. Continue your smart saving and investing strategies!"
-
-    def financial_health_grade(self, net_income, net_worth, surplus):
-        grade = 50.0
-        if net_income >= 3000: grade += 20.0
-        elif net_income >= 1500: grade += 10.0
-
-        if net_worth >= 100000: grade += 20.0
-        elif net_worth >= 50000: grade += 10.0
-
-        if self.credit_score >= 750: grade += 10.0
-        elif self.credit_score >= 650: grade += 5.0
-
-        if surplus > 0: grade += 10.0
-        elif surplus < 0: grade -= 10.0
-
-        grade = max(0, min(grade, 100))
-        st.subheader("Your Financial Health Grade")
-        st.write(f"**Your Financial Health Grade:** {grade:.2f}/100")
+    st.subheader("Financial Projections")
+    for period, data in projections.items():
+        st.markdown(f"### In {period.replace('_', ' ').capitalize()}:")
+        st.markdown(f"**Projected Income**: ${data['future_income']:,.2f}")
+        st.markdown(f"**Projected Savings**: ${data['future_savings']:,.2f}")
+        st.markdown(f"**Projected Investments**: ${data['future_investments']:,.2f}")
+        st.markdown(f"**Projected Debt**: ${data['future_debt']:,.2f}")
+        st.markdown(f"**Projected Credit Score**: {data['future_credit_score']}")
+        st.markdown(f"**Projected Net Worth**: ${data['future_net_worth']:,.2f}")
+        st.markdown(f"**Emergency Fund (Months)**: {data['future_emergency_fund']:.2f}")
+        st.markdown("\n---")
 
 if __name__ == "__main__":
-    advisor = FinanceAdvisor()
-    advisor.collect_user_data()
+    financial_report()
