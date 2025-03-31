@@ -3,7 +3,12 @@ import numpy as np
 import streamlit as st
 import locale
 
-locale.setlocale(locale.LC_ALL, '')
+# Attempt to set locale to US English as a fallback
+try:
+    locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
+except locale.Error:
+    st.warning("Locale not supported. Using default settings.")
+
 st.set_page_config(page_title="Finance Advisor", layout="centered")
 st.markdown("""
     <style>
@@ -31,21 +36,27 @@ class FinanceAdvisor:
 
         # Input with descriptions
         with st.expander("Income & Expenses Details"):
-            self.income = st.number_input("Monthly Income (before taxes):", min_value=0.0, help="Your gross income before deductions.")
-            self.expenses = st.number_input("Monthly Expenses:", min_value=0.0, help="Include rent, groceries, utilities, and other recurring costs.")
-            self.savings = st.number_input("Total Savings:", min_value=0.0, help="All funds stored in savings accounts, emergency funds, or cash reserves.")
-            self.investments = st.number_input("Total Investments:", min_value=0.0, help="Include stocks, bonds, and other investment vehicles.")
+            self.income = st.number_input("Monthly Income (before taxes):", min_value=0.0)
+            self.expenses = st.number_input("Monthly Expenses:", min_value=0.0)
+            self.savings = st.number_input("Total Savings:", min_value=0.0)
+            self.investments = st.number_input("Total Investments:", min_value=0.0)
 
         with st.expander("Tax Information"):
-            self.federal_tax = st.slider("Federal Tax Rate (%)", 0, 50, 7, help="Your federal income tax rate.") / 100
-            self.state_tax = st.slider("State Tax Rate (%)", 0, 50, 15, help="Your state-specific income tax rate.") / 100
-            self.local_tax = st.slider("Local Tax Rate (%)", 0, 50, 20, help="Local or city-specific tax rates.") / 100
+            self.federal_tax = st.slider("Federal Tax Rate (%)", 0, 50, 7) / 100
+            self.state_tax = st.slider("State Tax Rate (%)", 0, 50, 15) / 100
+            self.local_tax = st.slider("Local Tax Rate (%)", 0, 50, 20) / 100
 
         with st.expander("Credit Score and Additional Info"):
-            self.credit_score = st.number_input("Credit Score (300-850):", min_value=300, max_value=850, value=700, help="A higher score may qualify you for better loan rates.")
+            self.credit_score = st.number_input("Credit Score (300-850):", min_value=300, max_value=850, value=700)
 
         if st.button("Generate Financial Report"):
             self.generate_financial_report()
+
+    def safe_currency(self, value):
+        try:
+            return locale.currency(value, grouping=True)
+        except ValueError:
+            return f"${value:,.2f}"  # Fallback to basic USD format
 
     def generate_financial_report(self):
         total_tax_rate = self.federal_tax + self.state_tax + self.local_tax
@@ -54,15 +65,14 @@ class FinanceAdvisor:
         net_worth = self.savings + self.investments
 
         st.subheader("Your Financial Report")
-        st.write(f"**Gross Monthly Income:** {locale.currency(self.income, grouping=True)}")
-        st.write(f"**Net Monthly Income After Taxes:** {locale.currency(net_income, grouping=True)}")
-        st.write(f"**Monthly Expenses:** {locale.currency(self.expenses, grouping=True)}")
-        st.write(f"**Total Savings:** {locale.currency(self.savings, grouping=True)}")
-        st.write(f"**Total Investments:** {locale.currency(self.investments, grouping=True)}")
+        st.write(f"**Gross Monthly Income:** {self.safe_currency(self.income)}")
+        st.write(f"**Net Monthly Income After Taxes:** {self.safe_currency(net_income)}")
+        st.write(f"**Monthly Expenses:** {self.safe_currency(self.expenses)}")
+        st.write(f"**Total Savings:** {self.safe_currency(self.savings)}")
+        st.write(f"**Total Investments:** {self.safe_currency(self.investments)}")
         st.write(f"**Credit Score:** {self.credit_score}")
-        st.write(f"**Net Worth:** {locale.currency(net_worth, grouping=True)}")
+        st.write(f"**Net Worth:** {self.safe_currency(net_worth)}")
 
-        # Additional Statistics
         expense_to_income_ratio = (self.expenses / self.income) * 100 if self.income else 0
         savings_to_income_ratio = (self.savings / self.income) * 100 if self.income else 0
         investment_to_net_worth_ratio = (self.investments / net_worth) * 100 if net_worth else 0
