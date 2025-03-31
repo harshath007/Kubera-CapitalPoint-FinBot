@@ -6,13 +6,12 @@ import locale
 # Set Streamlit Page Config First
 st.set_page_config(page_title="Finance Advisor", layout="centered")
 
-# Attempt to set locale
+# Attempt to set locale to US English as a fallback
 try:
     locale.setlocale(locale.LC_ALL, 'en_US.UTF-8')
 except locale.Error:
     st.warning("Locale not supported. Using default settings.")
 
-st.set_page_config(page_title="Finance Advisor", layout="centered")
 st.markdown("""
     <style>
     body { background-color: #ffffff; color: #000000; font-family: 'Segoe UI', sans-serif; }
