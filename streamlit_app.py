@@ -1,3 +1,25 @@
+import numpy as np
+import streamlit as st
+
+def get_percentile(user_value, national_average, national_std_dev):
+    """Calculate the percentile ranking of the user's value compared to national data."""
+    if national_std_dev == 0:
+        return 50  # If there's no variation, assume user is average
+    z_score = (user_value - national_average) / national_std_dev
+    percentile = round(100 * (1 - 0.5 * (1 + np.math.erf(z_score / np.sqrt(2)))), 2)
+    return max(1, min(100, percentile))  # Ensure percentile stays between 1 and 100
+
+import numpy as np
+import streamlit as st
+
+def get_percentile(user_value, national_average, national_std_dev):
+    """Calculate the percentile ranking of the user's value compared to national data."""
+    if national_std_dev == 0:
+        return 50  # If there's no variation, assume user is average
+    z_score = (user_value - national_average) / national_std_dev
+    percentile = round(100 * (1 - 0.5 * (1 + np.math.erf(z_score / np.sqrt(2)))), 2)
+    return max(1, min(100, percentile))  # Ensure percentile stays between 1 and 100
+
 def financial_report():
     st.set_page_config(page_title="Finance Advisor", page_icon="💰", layout="centered")
     st.title("💰 Finance Advisor")
@@ -38,15 +60,10 @@ def financial_report():
     # Financial Calculations
     net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
     net_worth = savings + investments
-    # Prevent division by zero
-    if income > 0:
-        debt_to_income_ratio = debt / income * 100  # Debt-to-income ratio as percentage
-    else:
-        debt_to_income_ratio = 0  # Default value if income is zero, or display a message
-        st.warning("Income cannot be zero. Please provide a valid income value.")
+    debt_to_income_ratio = debt / income * 100  # Debt-to-income ratio as percentage
     emergency_fund = min(savings / (expenses / 12), 12)  # Capped at 12 months of expenses
-    savings_rate = savings / (income * 12) if income > 0 else 0  # Avoid division by zero
-    investment_rate = investments / (income * 12) if income > 0 else 0  # Avoid division by zero
+    savings_rate = savings / (income * 12)
+    investment_rate = investments / (income * 12)
 
     # Percentile Calculations
     percentiles = {
@@ -128,3 +145,4 @@ def financial_report():
 
 if __name__ == "__main__":
     financial_report()
+
