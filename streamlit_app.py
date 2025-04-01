@@ -177,12 +177,28 @@ national_avg_investments = 20000    # Average investments
 national_avg_debt = 9000            # Average personal debt
 national_avg_credit = 715           # Average credit score
 
+# --- National Financial Averages (Approximate US Data) ---
+national_avg_income = 65000 / 12  # Monthly income ($65K per year)
+national_avg_savings = 6000        # Average total savings
+national_avg_investments = 20000    # Average investments
+national_avg_debt = 9000            # Average personal debt
+national_avg_credit = 715           # Average credit score
+
+# --- Ensure user inputs exist before calculations ---
+if income is None: income = 0
+if savings is None: savings = 0
+if investments is None: investments = 0
+if debt is None: debt = 0
+if credit_score is None: credit_score = 300  # Minimum credit score
+
 # --- Percentile Calculations ---
 def calculate_percentile(user_value, national_avg):
     """
     Calculates the approximate percentile ranking compared to the national average.
     Ensures the result stays between 0 and 100.
     """
+    if national_avg == 0:
+        return 50  # Default percentile if no valid comparison exists
     return min(100, max(0, (user_value / national_avg) * 50 + 50))  # Normalized scale
 
 income_percentile = calculate_percentile(income * 12, national_avg_income * 12)
