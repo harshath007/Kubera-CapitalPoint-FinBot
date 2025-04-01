@@ -177,19 +177,46 @@ national_avg_investments = 20000    # Average investments
 national_avg_debt = 9000            # Average personal debt
 national_avg_credit = 715           # Average credit score
 
-# --- National Financial Averages (Approximate US Data) ---
-national_avg_income = 65000 / 12  # Monthly income ($65K per year)
-national_avg_savings = 6000        # Average total savings
-national_avg_investments = 20000    # Average investments
-national_avg_debt = 9000            # Average personal debt
-national_avg_credit = 715           # Average credit score
-
 # --- Ensure user inputs exist before calculations ---
 if income is None: income = 0
 if savings is None: savings = 0
 if investments is None: investments = 0
 if debt is None: debt = 0
 if credit_score is None: credit_score = 300  # Minimum credit score
+
+# --- National Financial Score Adjustment ---
+base_score = 100.0
+
+# Adjust score based on national comparisons
+if savings > national_avg_savings:
+    base_score += 2.5
+else:
+    base_score -= 2.5
+
+if debt < national_avg_debt:
+    base_score += 2.0
+else:
+    base_score -= 2.0
+
+if credit_score > national_avg_credit:
+    base_score += 1.5
+else:
+    base_score -= 1.5
+
+# Ensure score is between 0.00 and 100.00
+final_score = round(max(0.00, min(100.00, base_score)), 2)
+
+# Assign grade color
+if final_score > 85:
+    grade_color = "green"
+elif final_score > 60:
+    grade_color = "yellow"
+else:
+    grade_color = "red"
+
+# Display Financial Score
+st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {final_score}/100.00</p>", unsafe_allow_html=True)
+
 
 # --- Percentile Calculations ---
 def calculate_percentile(user_value, national_avg):
