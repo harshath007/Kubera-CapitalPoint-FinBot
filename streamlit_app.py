@@ -49,10 +49,12 @@ def financial_report():
     # Financial Calculations
     net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
     net_worth = savings + investments
-    debt_to_income_ratio = debt / income * 100  # Debt-to-income ratio as percentage
-    emergency_fund = min(savings / (expenses / 12), 12)  # Capped at 12 months of expenses
-    savings_rate = savings / (income * 12)
-    investment_rate = investments / (income * 12)
+    # Prevent division by zero
+    debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
+    savings_rate = (savings / (income * 12)) if income > 0 else 0
+    investment_rate = (investments / (income * 12)) if income > 0 else 0
+    emergency_fund = (savings / (expenses / 12)) if expenses > 0 else 0
+
 
     # Percentile Calculations
     percentiles = {
