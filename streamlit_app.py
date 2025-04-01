@@ -96,7 +96,6 @@ st.markdown(f"**💳 Debt-to-Income Ratio:** `{debt_to_income_ratio:.2f}%`")
 st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months (Cap: 6 months)")
 st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f}`")
 
-# --- Financial Score ---
 # --- New Financial Score Calculation (Precision to Decimal) ---
 base_score = 100.0
 
@@ -171,23 +170,46 @@ else:
 st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {final_score}/100.00</p>", unsafe_allow_html=True)
 
 
+# --- National Financial Averages (Approximate US Data) ---
+national_avg_income = 65000 / 12  # Monthly income ($65K per year)
+national_avg_savings = 6000        # Average total savings
+national_avg_investments = 20000    # Average investments
+national_avg_debt = 9000            # Average personal debt
+national_avg_credit = 715           # Average credit score
+
+# --- Percentile Calculations ---
+def calculate_percentile(user_value, national_avg):
+    """
+    Calculates the approximate percentile ranking compared to the national average.
+    Ensures the result stays between 0 and 100.
+    """
+    return min(100, max(0, (user_value / national_avg) * 50 + 50))  # Normalized scale
+
+income_percentile = calculate_percentile(income * 12, national_avg_income * 12)
+savings_percentile = calculate_percentile(savings, national_avg_savings)
+investment_percentile = calculate_percentile(investments, national_avg_investments)
+debt_percentile = 100 - calculate_percentile(debt, national_avg_debt)  # Lower debt is better
+credit_percentile = calculate_percentile(credit_score, national_avg_credit)
+
 # --- National Standing Report ---
 st.subheader("📌 National Standing Report")
-st.markdown(f"- **Income Percentile:** {income_percentile:.0f}th")
-st.markdown(f"- **Savings Percentile:** {savings_percentile:.0f}th")
-st.markdown(f"- **Investments Percentile:** {investment_percentile:.0f}th")
-st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th (Lower is better)")
-st.markdown(f"- **Credit Score Percentile:** {credit_percentile:.0f}th")
+st.markdown(f"- **Income Percentile:** `{income_percentile:.1f}th`")
+st.markdown(f"- **Savings Percentile:** `{savings_percentile:.1f}th`")
+st.markdown(f"- **Investments Percentile:** `{investment_percentile:.1f}th`")
+st.markdown(f"- **Debt Percentile:** `{debt_percentile:.1f}th` (Lower is better)")
+st.markdown(f"- **Credit Score Percentile:** `{credit_percentile:.1f}th`")
 
-# --- Data Visualization ---
-st.subheader("📊 Financial Distribution")
-fig = go.Figure(data=[go.Pie(
-    labels=["Savings", "Investments", "Debt"],
-    values=[savings, investments, debt],
-    hole=0.4
-)])
-fig.update_layout(showlegend=True, width=600, height=400)
-st.plotly_chart(fig, use_container_width=True)
+# --- Optional: Visual Representation ---
+st.subheader("📊 National Comparison")
+comparison_fig = go.Figure()
+comparison_fig.add_trace(go.Bar(
+    x=["Income", "Savings", "Investments", "Debt", "Credit Score"],
+    y=[income_percentile, savings_percentile, investment_percentile, debt_percentile, credit_percentile],
+    marker_color=["blue", "green", "orange", "red", "purple"]
+))
+comparison_fig.update_layout(yaxis=dict(range=[0, 100]), title="Your Financial Percentile vs National Average")
+st.plotly_chart(comparison_fig, use_container_width=True)
+
 
 # --- Financial Projections ---
 def forecast_years(years):
