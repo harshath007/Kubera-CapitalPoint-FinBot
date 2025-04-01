@@ -149,10 +149,14 @@ def forecast_years(years):
     investment_growth = 0.06
     debt_reduction = 0.05
     credit_score_improvement = 5
+    annual_investment_contribution = income * 0.15  # Let's assume 15% of the income is invested annually
 
     future_income = income * ((1 + income_growth) ** years)
     future_savings = savings + (financials["net_income"] * savings_growth * 12 * years)
-    future_investments = investments * ((1 + investment_growth) ** years)
+    future_investments = investments
+    for year in range(years):
+        future_investments += annual_investment_contribution
+        future_investments *= (1 + investment_growth)  # Apply investment growth after adding the contribution
     future_debt = debt * ((1 - debt_reduction) ** years)
     future_credit_score = min(850, credit_score + (credit_score_improvement * years))
     future_net_worth = future_savings + future_investments - future_debt
@@ -168,6 +172,7 @@ def forecast_years(years):
 
 projection_years = [2, 5, 10]
 projection_data = {year: forecast_years(year) for year in projection_years}
+
 
 # --- Display Sections ---
 st.markdown("<h2>📌 National Standing</h2>", unsafe_allow_html=True)
