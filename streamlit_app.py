@@ -30,9 +30,7 @@ def financial_report():
     
     credit_score = st.sidebar.number_input("Credit Score (300-850):", min_value=300, max_value=850)
 
-    st.sidebar.markdown("**Financial Goals**")
-    savings_goal = st.sidebar.number_input("Savings Goal ($):", min_value=0.0, format="%.2f")
-    investment_goal = st.sidebar.number_input("Investment Goal ($):", min_value=0.0, format="%.2f")
+    st.sidebar.markdown("**Financial Information**")
     debt = st.sidebar.number_input("Current Debt ($):", min_value=0.0, format="%.2f")
 
     # National averages and standard deviations for comparison
@@ -50,12 +48,12 @@ def financial_report():
     # Financial Calculations
     net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
     net_worth = savings + investments
+    
     # Prevent division by zero
     debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
     savings_rate = (savings / (income * 12)) if income > 0 else 0
     investment_rate = (investments / (income * 12)) if income > 0 else 0
-    emergency_fund = (savings / (expenses / 12)) if expenses > 0 else 0
-
+    emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
 
     # Percentile Calculations
     percentiles = {
@@ -77,11 +75,11 @@ def financial_report():
     age_comparison = get_percentile(net_worth, national_net_worth_by_age[closest_age], national_std_dev["net_worth"])
 
     # Financial Predictions (2, 5, 10 years)
-    income_growth_rate = 0.03  # 3% annual growth in income
-    savings_growth_rate = 0.15  # User saves 15% of net income
-    investment_growth_rate = 0.06  # 6% annual return on investments
-    debt_reduction_rate = 0.05  # Reduce debt by 5% per year
-    credit_score_improvement = 5  # Improve credit score by 5 points per year
+    income_growth_rate = 0.03  
+    savings_growth_rate = 0.15  
+    investment_growth_rate = 0.06  
+    debt_reduction_rate = 0.05  
+    credit_score_improvement = 5  
 
     def forecast_years(years):
         """Forecast the financial situation in the future (2, 5, 10 years)."""
@@ -91,8 +89,10 @@ def financial_report():
         future_debt = debt * ((1 - debt_reduction_rate) ** years)
         future_credit_score = credit_score + (credit_score_improvement * years)
         future_net_worth = future_savings + future_investments - future_debt
-        future_emergency_fund = future_savings / (expenses / 12)  # Months worth of future savings
-        
+
+        # Prevent division by zero for future emergency fund calculation
+        future_emergency_fund = future_savings / (expenses / 12) if expenses > 0 else float('inf')
+
         return {
             "future_income": future_income,
             "future_savings": future_savings,
@@ -103,7 +103,6 @@ def financial_report():
             "future_emergency_fund": future_emergency_fund
         }
 
-    # Projections for 2, 5, and 10 years
     projections = {
         "2_years": forecast_years(2),
         "5_years": forecast_years(5),
@@ -126,14 +125,8 @@ def financial_report():
     st.subheader("Financial Projections")
     for period, data in projections.items():
         st.markdown(f"### In {period.replace('_', ' ').capitalize()}:")
-        st.markdown(f"**Projected Income**: ${data['future_income']:,.2f}")
-        st.markdown(f"**Projected Savings**: ${data['future_savings']:,.2f}")
-        st.markdown(f"**Projected Investments**: ${data['future_investments']:,.2f}")
-        st.markdown(f"**Projected Debt**: ${data['future_debt']:,.2f}")
-        st.markdown(f"**Projected Credit Score**: {data['future_credit_score']}")
-        st.markdown(f"**Projected Net Worth**: ${data['future_net_worth']:,.2f}")
-        st.markdown(f"**Emergency Fund (Months)**: {data['future_emergency_fund']:.2f}")
-        st.markdown("\n---")
+        for key, value in data.items():
+            st.markdown(f"**{key.replace('_', ' ').capitalize()}**: {value:,.2f}")
 
 if __name__ == "__main__":
     financial_report()
