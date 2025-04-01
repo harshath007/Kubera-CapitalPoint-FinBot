@@ -44,7 +44,11 @@ net_worth = assets + savings + investments - debt
 debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
 savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
-emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
+# --- Emergency Fund Calculation (Capped at 6 Months) ---
+emergency_fund_cap = 6  
+emergency_fund = min(savings / (expenses / 12), emergency_fund_cap) if expenses > 0 else float('inf')
+needed_savings_for_fund = max(0, (expenses / 12) * emergency_fund_cap - savings)
+savings_contribution = min(needed_savings_for_fund * 0.3, savings) if needed_savings_for_fund > 0 else 0
 
 # --- Financial Grading System (0-100) ---
 score = 100  
@@ -92,6 +96,20 @@ st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score
 st.subheader("📌 Personalized Financial Advice")
 for tip in advice:
     st.markdown(f"- {tip}")
+# --- National Comparison Report ---
+st.subheader("📈 National Comparison Report")
+national_avg_savings = 6000  
+national_avg_income = 4500  
+national_avg_debt = 30000  
+national_avg_credit = 710  
+
+comparison_report = f"""
+- **Savings:** You have `{savings:,.2f}`. The U.S. average is `${national_avg_savings:,.2f}`.
+- **Income:** Your income is `${income:,.2f}`. The U.S. median is `${national_avg_income:,.2f}`.
+- **Debt:** Your debt is `${debt:,.2f}`. The U.S. average is `${national_avg_debt:,.2f}`.
+- **Credit Score:** Your score is `{credit_score}`. The U.S. average is `{national_avg_credit}`.
+"""
+st.markdown(comparison_report)
 
 # --- Data Visualization ---
 st.subheader("📊 Financial Distribution")
