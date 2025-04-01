@@ -14,6 +14,7 @@ st.markdown("""
         div.block-container { padding: 2rem; }
         .stButton>button { width: 100%; }
         h1, h2, h3 { text-align: center; color: #FFD700; }
+        .score { font-size: 28px; text-align: center; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -24,11 +25,12 @@ st.markdown("<h3>Your Personal Financial Dashboard</h3>", unsafe_allow_html=True
 # --- Sidebar (User Inputs) ---
 st.sidebar.header("📊 User Input")
 income = st.sidebar.number_input("💵 Monthly Income (Before Taxes): $", min_value=0.0, format="%.2f")
-expenses = st.sidebar.number_input("💸 Monthly Expenses(Including Taxes): $", min_value=0.0, format="%.2f")
+expenses = st.sidebar.number_input("💸 Monthly Expenses (Including Taxes): $", min_value=0.0, format="%.2f")
 savings = st.sidebar.number_input("🏦 Total Savings: $", min_value=0.0, format="%.2f")
 investments = st.sidebar.number_input("📈 Total Investments: $", min_value=0.0, format="%.2f")
 debt = st.sidebar.number_input("💳 Current Debt ($):", min_value=0.0, format="%.2f")
-age = st.sidebar.number_input("🎂 Age:", min_value=0, max_value=100, step=1)
+assets = st.sidebar.number_input("🏡 Total Asset Value ($):", min_value=0.0, format="%.2f")
+age = st.sidebar.number_input("🎂 Age:", min_value=10, max_value=100, step=1)
 credit_score = st.sidebar.slider("📊 Credit Score (300-850):", min_value=300, max_value=850, value=700)
 
 st.sidebar.header("🧾 Tax Rates")
@@ -38,23 +40,40 @@ local_tax = st.sidebar.slider("Local Tax Rate (%)", 0, 50, 3)
 
 # --- Financial Calculations ---
 net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
-net_worth = savings + investments - debt
+net_worth = assets + savings + investments - debt
 debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
 savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
 emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
 
+# --- Financial Grading System (0-100) ---
+score = 100  
+if debt_to_income_ratio > 40:
+    score -= 20  
+if savings_rate < 0.15:
+    score -= 15  
+if emergency_fund < 3:
+    score -= 10  
+if investment_rate < 0.2:
+    score -= 10  
+if credit_score < 600:
+    score -= 20  
+
+grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
+
 # --- Financial Advice ---
 def get_advice():
     advice = []
     if debt_to_income_ratio > 40:
-        advice.append("⚠️ Your Debt-to-Income Ratio is high! Consider reducing debt.")
+        advice.append("⚠️ Your Debt-to-Income Ratio is **high!** Reduce debt.")
     if savings_rate < 0.15:
-        advice.append("📉 Your savings rate is below the recommended 15%. Try increasing it.")
+        advice.append("📉 Your savings rate is **below 15%**. Consider increasing savings.")
     if emergency_fund < 3:
-        advice.append("🛑 Your emergency fund is below 3 months of expenses. Consider increasing it.")
+        advice.append("🛑 You need at least 3 months of savings in your emergency fund.")
     if investment_rate < 0.2:
-        advice.append("💡 You're investing less than 20%. Consider increasing investments for long-term growth.")
+        advice.append("💡 Increase your investments for long-term financial security.")
+    if credit_score < 600:
+        advice.append("📉 Improve your **credit score** to access better financial options.")
     
     return advice if advice else ["✅ Your finances are in great shape! Keep it up!"]
 
@@ -66,6 +85,9 @@ st.markdown(f"**💰 Net Monthly Income:** `${net_income:,.2f}`")
 st.markdown(f"**📈 Net Worth:** `${net_worth:,.2f}`")
 st.markdown(f"**💳 Debt-to-Income Ratio:** `{debt_to_income_ratio:.2f}%`")
 st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months of expenses")
+
+# --- Financial Score ---
+st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
 st.subheader("📌 Personalized Financial Advice")
 for tip in advice:
