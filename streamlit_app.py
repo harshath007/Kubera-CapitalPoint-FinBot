@@ -3,7 +3,7 @@ import numpy as np
 import plotly.graph_objects as go
 
 # --- Page Configuration ---
-st.set_page_config(page_title="Finance Advisor", page_icon="💰", layout="wide")
+st.set_page_config(page_title="KCP Finbot", page_icon="💰", layout="wide")
 
 # --- Custom Styling ---
 st.markdown("""
