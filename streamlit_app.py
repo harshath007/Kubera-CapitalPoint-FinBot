@@ -1,7 +1,5 @@
 import streamlit as st
 import numpy as np
-import math
-import plotly.express as px
 import plotly.graph_objects as go
 
 # --- Page Configuration ---
@@ -44,54 +42,70 @@ net_worth = assets + savings + investments - debt
 debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
 savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
-emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
+
+# --- Emergency Fund Calculation (Capped at 6 Months) ---
+emergency_fund_cap = 6  # Max 6 months of expenses
+emergency_fund = min(savings / (expenses / 12), emergency_fund_cap) if expenses > 0 else float('inf')
+
+# Only allocate a portion of savings if not at the cap
+needed_savings_for_fund = max(0, (expenses / 12) * emergency_fund_cap - savings)
+if needed_savings_for_fund > 0:
+    savings_contribution = min(needed_savings_for_fund * 0.3, savings)  # 30% of needed amount
+else:
+    savings_contribution = 0
+
+# --- National Percentile Report (Based on Age) ---
+# (Fake percentiles for now, replace with real data later)
+income_percentile = np.interp(income, [20000, 100000, 250000], [30, 70, 95])
+savings_percentile = np.interp(savings, [5000, 50000, 200000], [25, 60, 90])
+investment_percentile = np.interp(investments, [1000, 50000, 150000], [20, 65, 85])
+debt_percentile = np.interp(debt, [0, 20000, 100000], [90, 50, 20])  # Inverse scale (low debt = high score)
+credit_percentile = np.interp(credit_score, [500, 700, 800], [20, 60, 90])
 
 # --- Financial Grading System (0-100) ---
 score = 100  
 if debt_to_income_ratio > 40:
-    score -= 20  
-if savings_rate < 0.15:
     score -= 15  
-if emergency_fund < 3:
+if savings_rate < 0.15:
     score -= 10  
+if emergency_fund < 3:
+    score -= 5  
 if investment_rate < 0.2:
     score -= 10  
 if credit_score < 600:
-    score -= 20  
+    score -= 10  
 
+# Bonuses for good financial habits
+if credit_score > 750:
+    score += 5
+if debt == 0:
+    score += 10
+if savings_rate > 0.3:
+    score += 5
+if investment_rate > 0.25:
+    score += 5
+
+score = max(0, min(score, 100))  # Ensure score stays in 0-100 range
 grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
-
-# --- Financial Advice ---
-def get_advice():
-    advice = []
-    if debt_to_income_ratio > 40:
-        advice.append("⚠️ Your Debt-to-Income Ratio is **high!** Reduce debt.")
-    if savings_rate < 0.15:
-        advice.append("📉 Your savings rate is **below 15%**. Consider increasing savings.")
-    if emergency_fund < 3:
-        advice.append("🛑 You need at least 3 months of savings in your emergency fund.")
-    if investment_rate < 0.2:
-        advice.append("💡 Increase your investments for long-term financial security.")
-    if credit_score < 600:
-        advice.append("📉 Improve your **credit score** to access better financial options.")
-    
-    return advice if advice else ["✅ Your finances are in great shape! Keep it up!"]
-
-advice = get_advice()
 
 # --- Display Financial Overview ---
 st.subheader("📊 Your Financial Overview")
 st.markdown(f"**💰 Net Monthly Income:** `${net_income:,.2f}`")
 st.markdown(f"**📈 Net Worth:** `${net_worth:,.2f}`")
 st.markdown(f"**💳 Debt-to-Income Ratio:** `{debt_to_income_ratio:.2f}%`")
-st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months of expenses")
+st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months (Cap: 6 months)")
+st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f}`")
 
 # --- Financial Score ---
 st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
-st.subheader("📌 Personalized Financial Advice")
-for tip in advice:
-    st.markdown(f"- {tip}")
+# --- National Standing Report ---
+st.subheader("📌 National Standing Report")
+st.markdown(f"- **Income Percentile:** {income_percentile:.0f}th")
+st.markdown(f"- **Savings Percentile:** {savings_percentile:.0f}th")
+st.markdown(f"- **Investments Percentile:** {investment_percentile:.0f}th")
+st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th (Lower is better)")
+st.markdown(f"- **Credit Score Percentile:** {credit_percentile:.0f}th")
 
 # --- Data Visualization ---
 st.subheader("📊 Financial Distribution")
@@ -103,44 +117,5 @@ fig = go.Figure(data=[go.Pie(
 fig.update_layout(showlegend=True, width=600, height=400)
 st.plotly_chart(fig, use_container_width=True)
 
-# --- Financial Projections ---
-def forecast_years(years):
-    """Predict financial growth over time."""
-    income_growth = 0.03
-    savings_growth = 0.15
-    investment_growth = 0.06
-    debt_reduction = 0.05
-    credit_score_improvement = 5
-
-    future_income = income * ((1 + income_growth) ** years)
-    future_savings = savings + (net_income * savings_growth * 12 * years)
-    future_investments = investments * ((1 + investment_growth) ** years)
-    future_debt = debt * ((1 - debt_reduction) ** years)
-    future_credit_score = min(850, credit_score + (credit_score_improvement * years))
-    future_net_worth = future_savings + future_investments - future_debt
-
-    return {
-        "Income": future_income,
-        "Savings": future_savings,
-        "Investments": future_investments,
-        "Debt": future_debt,
-        "Net Worth": future_net_worth,
-        "Credit Score": future_credit_score
-    }
-
-st.subheader("🚀 Financial Projections")
-projection_years = [2, 5, 10]
-projection_data = {year: forecast_years(year) for year in projection_years}
-
-for year in projection_years:
-    st.markdown(f"### 📅 In {year} years:")
-    st.markdown(f"- **💰 Income:** `${projection_data[year]['Income']:,.2f}`")
-    st.markdown(f"- **🏦 Savings:** `${projection_data[year]['Savings']:,.2f}`")
-    st.markdown(f"- **📈 Investments:** `${projection_data[year]['Investments']:,.2f}`")
-    st.markdown(f"- **💳 Debt:** `${projection_data[year]['Debt']:,.2f}`")
-    st.markdown(f"- **📊 Net Worth:** `${projection_data[year]['Net Worth']:,.2f}`")
-    st.markdown(f"- **🏆 Credit Score:** `{projection_data[year]['Credit Score']}`")
-
 st.markdown("---")
 st.markdown("<h3>🔁 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
-
