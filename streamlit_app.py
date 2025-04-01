@@ -17,7 +17,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # --- Header ---
-st.markdown("<h1>💰 Finance Advisor</h1>", unsafe_allow_html=True)
+st.markdown("<h1>💰 Kubera CapitalPoint Finbot</h1>", unsafe_allow_html=True)
 st.markdown("<h3>Your Personal Financial Dashboard</h3>", unsafe_allow_html=True)
 
 # --- Sidebar (User Inputs) ---
