@@ -8,11 +8,12 @@ st.set_page_config(page_title="KCP Finbot", page_icon="💰", layout="wide")
 # --- Custom Styling ---
 st.markdown("""
     <style>
-        .main { background-color: #111; color: #fff; }
-        div.block-container { padding: 2rem; }
+        .main { background-color: #1a1a1a; color: #ffffff; }
+        div.block-container { padding: 2rem; max-width: 900px; }
         .stButton>button { width: 100%; }
         h1, h2, h3 { text-align: center; color: #FFD700; }
-        .score { font-size: 28px; text-align: center; font-weight: bold; }
+        .score { font-size: 32px; text-align: center; font-weight: bold; }
+        .section { border-bottom: 2px solid #FFD700; padding: 15px 0; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -26,8 +27,8 @@ income = st.sidebar.number_input("💵 Monthly Income (Before Taxes): $", min_va
 expenses = st.sidebar.number_input("💸 Monthly Expenses (Including Taxes): $", min_value=0.0, format="%.2f")
 savings = st.sidebar.number_input("🏦 Total Savings: $", min_value=0.0, format="%.2f")
 investments = st.sidebar.number_input("📈 Total Investments: $", min_value=0.0, format="%.2f")
-debt = st.sidebar.number_input("💳 Current Debt ($):", min_value=0.0, format="%.2f")
-assets = st.sidebar.number_input("🏡 Total Asset Value ($):", min_value=0.0, format="%.2f")
+debt = st.sidebar.number_input("💳 Current Debt: $", min_value=0.0, format="%.2f")
+assets = st.sidebar.number_input("🏡 Total Asset Value: $", min_value=0.0, format="%.2f")
 age = st.sidebar.number_input("🎂 Age:", min_value=10, max_value=100, step=1)
 credit_score = st.sidebar.slider("📊 Credit Score (300-850):", min_value=300, max_value=850, value=700)
 
@@ -43,89 +44,79 @@ debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
 savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
 
-# --- Emergency Fund Calculation (Capped at 6 Months) ---
-emergency_fund_cap = 6  # Max 6 months of expenses
-emergency_fund = min(savings / (expenses / 12), emergency_fund_cap) if expenses > 0 else float('inf')
+# --- Emergency Fund Calculation ---
+emergency_fund = savings / (expenses * 6) if expenses > 0 else float('inf')
 
-# Only allocate a portion of savings if not at the cap
-needed_savings_for_fund = max(0, (expenses / 12) * emergency_fund_cap - savings)
-if needed_savings_for_fund > 0:
-    savings_contribution = min(needed_savings_for_fund * 0.3, savings)  # 30% of needed amount
-else:
-    savings_contribution = 0
+# --- Financial Score Calculation ---
+score = 100
 
-# --- National Percentile Report (Based on Age) ---
-# (Fake percentiles for now, replace with real data later)
-income_percentile = np.interp(income, [20000, 100000, 250000], [30, 70, 95])
-savings_percentile = np.interp(savings, [5000, 50000, 200000], [25, 60, 90])
-investment_percentile = np.interp(investments, [1000, 50000, 150000], [20, 65, 85])
-debt_percentile = np.interp(debt, [0, 20000, 100000], [90, 50, 20])  # Inverse scale (low debt = high score)
-credit_percentile = np.interp(credit_score, [500, 700, 800], [20, 60, 90])
-
-# --- Financial Grading System (0-100) ---
-score = 100  
+# Debt penalties
 if debt_to_income_ratio > 40:
-    score -= 15  
-if savings_rate < 0.15:
-    score -= 10  
-if emergency_fund < 3:
-    score -= 5  
-if investment_rate < 0.2:
-    score -= 10  
-if credit_score < 600:
-    score -= 10  
+    score -= 20
+elif debt_to_income_ratio > 30:
+    score -= 15
+elif debt_to_income_ratio > 20:
+    score -= 10
 
-# Bonuses for good financial habits
-if credit_score > 750:
-    score += 5
+# Savings & Investment impact
+if savings_rate < 0.15:
+    score -= 10
+if investment_rate < 0.2:
+    score -= 10
+
+# Emergency Fund security
+if emergency_fund < 3:
+    score -= 10
+elif emergency_fund < 6:
+    score -= 5
+
+# Credit Score impact
+if credit_score < 600:
+    score -= 15
+elif credit_score < 700:
+    score -= 5
+
+# Bonuses for strong financial habits
 if debt == 0:
     score += 10
 if savings_rate > 0.3:
     score += 5
 if investment_rate > 0.25:
     score += 5
+if credit_score > 750:
+    score += 5
 
 score = max(0, min(score, 100))  # Ensure score stays in 0-100 range
 grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
 
 # --- Display Financial Overview ---
-st.subheader("📊 Your Financial Overview")
+st.markdown("<div class='section'><h2>📊 Financial Overview</h2></div>", unsafe_allow_html=True)
 st.markdown(f"**💰 Net Monthly Income:** `${net_income:,.2f}`")
 st.markdown(f"**📈 Net Worth:** `${net_worth:,.2f}`")
 st.markdown(f"**💳 Debt-to-Income Ratio:** `{debt_to_income_ratio:.2f}%`")
-st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months (Cap: 6 months)")
-st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f}`")
+st.markdown(f"**🚨 Emergency Fund Coverage:** `{emergency_fund:.2f}` months (Goal: 6 months)")
 
 # --- Financial Score ---
 st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
-# --- National Standing Report ---
-st.subheader("📌 National Standing Report (Lower is Better)")
-st.markdown(f"- **Income Percentile:** {income_percentile:.0f}th")
-st.markdown(f"- **Savings Percentile:** {savings_percentile:.0f}th")
-st.markdown(f"- **Investments Percentile:** {investment_percentile:.0f}th")
-st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th (Higher is Better)")
-st.markdown(f"- **Credit Score Percentile:** {credit_percentile:.0f}th")
-
-# --- Data Visualization ---
-st.subheader("📊 Financial Distribution")
+# --- Financial Distribution Graph ---
+st.markdown("<div class='section'><h2>📊 Financial Distribution</h2></div>", unsafe_allow_html=True)
 fig = go.Figure(data=[go.Pie(
-    labels=["Savings", "Investments", "Debt"],
-    values=[savings, investments, debt],
+    labels=["Savings", "Investments", "Debt", "Assets"],
+    values=[savings, investments, debt, assets],
     hole=0.4
 )])
 fig.update_layout(showlegend=True, width=600, height=400)
 st.plotly_chart(fig, use_container_width=True)
 
-
 # --- Financial Projections ---
 def forecast_years(years):
     """Predict financial growth over time."""
-    income_growth = 0.03
-    savings_growth = 0.15
-    investment_growth = 0.06
-    debt_reduction = 0.05
-    credit_score_improvement = 5
+    income_growth = 0.06
+    savings_growth = 0.17
+    investment_growth = 0.07
+    debt_reduction = 0.07
+    credit_score_improvement = 15
 
     future_income = income * ((1 + income_growth) ** years)
     future_savings = savings + (net_income * savings_growth * 12 * years)
@@ -143,7 +134,7 @@ def forecast_years(years):
         "Credit Score": future_credit_score
     }
 
-st.subheader("🚀 Financial Projections")
+st.markdown("<div class='section'><h2>🚀 Financial Projections</h2></div>", unsafe_allow_html=True)
 projection_years = [2, 5, 10]
 projection_data = {year: forecast_years(year) for year in projection_years}
 
@@ -156,5 +147,4 @@ for year in projection_years:
     st.markdown(f"- **📊 Net Worth:** `${projection_data[year]['Net Worth']:,.2f}`")
     st.markdown(f"- **🏆 Credit Score:** `{projection_data[year]['Credit Score']}`")
 
-st.markdown("---")
-st.markdown("<h3>🔁 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
+st.markdown("<h3>🔁 Track your progress regularly!</h3>", unsafe_allow_html=True)
