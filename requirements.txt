@@ -1,2 +1,2 @@
-streamlit run your_script.py
+streamlit
 plotly
