@@ -38,60 +38,24 @@ state_tax = st.sidebar.slider("State Tax Rate (%)", 0, 50, 5)
 local_tax = st.sidebar.slider("Local Tax Rate (%)", 0, 50, 3)
 
 # --- Financial Calculations ---
-net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
-net_worth = assets + savings + investments - debt
-debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
-savings_rate = (savings / (income * 12)) if income > 0 else 0
-investment_rate = (investments / (income * 12)) if income > 0 else 0
-emergency_fund = savings / (expenses * 6) if expenses > 0 else float('inf')
+def calculate_financials():
+    net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
+    net_worth = assets + savings + investments - debt
+    debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
+    savings_rate = (savings / (income * 12)) if income > 0 else 0
+    investment_rate = (investments / (income * 12)) if income > 0 else 0
+    emergency_fund = savings / (expenses * 6) if expenses > 0 else float('inf')
 
-# --- Financial Score Calculation ---
-score = 100
+    return {
+        "net_income": net_income,
+        "net_worth": net_worth,
+        "debt_to_income_ratio": debt_to_income_ratio,
+        "savings_rate": savings_rate,
+        "investment_rate": investment_rate,
+        "emergency_fund": emergency_fund
+    }
 
-# Debt penalties
-if debt_to_income_ratio > 40:
-    score -= 20
-elif debt_to_income_ratio > 30:
-    score -= 15
-elif debt_to_income_ratio > 20:
-    score -= 10
-
-# Savings & Investment impact
-if savings_rate < 0.15:
-    score -= 10
-if investment_rate < 0.2:
-    score -= 10
-
-# Emergency Fund security
-if emergency_fund < 3:
-    score -= 10
-elif emergency_fund < 6:
-    score -= 5
-
-# Age-based adjustments
-if age < 30 and net_worth > 50000:
-    score += 5  # Reward young savers
-elif age > 50 and net_worth < 100000:
-    score -= 10  # Penalize low net worth at later age
-
-# Credit Score impact
-if credit_score < 600:
-    score -= 15
-elif credit_score < 700:
-    score -= 5
-
-# Bonuses for strong financial habits
-if debt == 0:
-    score += 10
-if savings_rate > 0.3:
-    score += 5
-if investment_rate > 0.25:
-    score += 5
-if credit_score > 750:
-    score += 5
-
-score = max(0, min(score, 100))
-grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
+financials = calculate_financials()
 
 # --- National Averages (U.S. Data for Comparison) ---
 us_avg_net_worth = 120000
@@ -100,9 +64,9 @@ us_avg_income = 65000
 us_avg_debt = 30000
 
 # --- National Standing Analysis ---
-def get_national_standing():
+def get_national_standing(financials):
     standing = []
-    if net_worth > us_avg_net_worth:
+    if financials["net_worth"] > us_avg_net_worth:
         standing.append("🌟 You have **above-average net worth!**")
     else:
         standing.append("⚠️ Your **net worth is below** the national average.")
@@ -124,57 +88,61 @@ def get_national_standing():
 
     return standing
 
-national_standing = get_national_standing()
+national_standing = get_national_standing(financials)
 
 # --- Financial Score Calculation ---
-score = 100
+def calculate_financial_score(financials, age, credit_score):
+    score = 100
 
-# Debt impact
-if debt_to_income_ratio > 40:
-    score -= 20
-elif debt_to_income_ratio > 30:
-    score -= 15
-elif debt_to_income_ratio > 20:
-    score -= 10
+    # Debt impact
+    if financials["debt_to_income_ratio"] > 40:
+        score -= 20
+    elif financials["debt_to_income_ratio"] > 30:
+        score -= 15
+    elif financials["debt_to_income_ratio"] > 20:
+        score -= 10
 
-# Savings & Investment impact
-if savings_rate < 0.15:
-    score -= 10
-if investment_rate < 0.2:
-    score -= 10
+    # Savings & Investment impact
+    if financials["savings_rate"] < 0.15:
+        score -= 10
+    if financials["investment_rate"] < 0.2:
+        score -= 10
 
-# Emergency Fund
-if emergency_fund < 3:
-    score -= 10
-elif emergency_fund < 6:
-    score -= 5
+    # Emergency Fund
+    if financials["emergency_fund"] < 3:
+        score -= 10
+    elif financials["emergency_fund"] < 6:
+        score -= 5
 
-# Age-based adjustments
-if age < 30 and net_worth > 50000:
-    score += 5
-elif age > 50 and net_worth < 100000:
-    score -= 10
+    # Age-based adjustments
+    if age < 30 and financials["net_worth"] > 50000:
+        score += 5
+    elif age > 50 and financials["net_worth"] < 100000:
+        score -= 10
 
-# Credit Score impact
-if credit_score < 600:
-    score -= 15
-elif credit_score < 700:
-    score -= 5
+    # Credit Score impact
+    if credit_score < 600:
+        score -= 15
+    elif credit_score < 700:
+        score -= 5
 
-# Bonuses for strong financial habits
-if debt == 0:
-    score += 10
-if savings_rate > 0.3:
-    score += 5
-if investment_rate > 0.25:
-    score += 5
-if credit_score > 750:
-    score += 5
+    # Bonuses for strong financial habits
+    if debt == 0:
+        score += 10
+    if financials["savings_rate"] > 0.3:
+        score += 5
+    if financials["investment_rate"] > 0.25:
+        score += 5
+    if credit_score > 750:
+        score += 5
 
-score = max(0, min(score, 100))
+    return max(0, min(score, 100))
+
+score = calculate_financial_score(financials, age, credit_score)
 grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
 
-# --- Financial Predictions ---
+# --- Financial Projections ---
+@st.cache_data
 def forecast_years(years):
     income_growth = 0.03
     savings_growth = 0.15
@@ -183,7 +151,7 @@ def forecast_years(years):
     credit_score_improvement = 5
 
     future_income = income * ((1 + income_growth) ** years)
-    future_savings = savings + (net_income * savings_growth * 12 * years)
+    future_savings = savings + (financials["net_income"] * savings_growth * 12 * years)
     future_investments = investments * ((1 + investment_growth) ** years)
     future_debt = debt * ((1 - debt_reduction) ** years)
     future_credit_score = min(850, credit_score + (credit_score_improvement * years))
@@ -214,5 +182,15 @@ for year in projection_years:
     st.markdown(f"💰 Income: **${projection_data[year]['Income']:,.2f}**")
     st.markdown(f"🏦 Savings: **${projection_data[year]['Savings']:,.2f}**")
     st.markdown(f"📈 Investments: **${projection_data[year]['Investments']:,.2f}**")
+
+# --- Visualization: Financial Score Gauge ---
+fig = go.Figure(go.Indicator(
+    mode="gauge+number",
+    value=score,
+    title={'text': "Financial Health Score"},
+    gauge={'axis': {'range': [0, 100]}, 'bar': {'color': grade_color}},
+    domain={'x': [0, 1], 'y': [0, 1]}
+))
+st.plotly_chart(fig)
 
 st.markdown("<h3>🔁 Stay on top of your finances!</h3>", unsafe_allow_html=True)
