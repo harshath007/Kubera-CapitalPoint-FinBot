@@ -174,6 +174,14 @@ st.markdown("<h2>📌 National Standing</h2>", unsafe_allow_html=True)
 for fact in national_standing:
     st.markdown(f"- {fact}")
 
+# --- Display Key Financial Stats ---
+st.markdown("<h2>📊 Key Financial Statistics</h2>", unsafe_allow_html=True)
+st.markdown(f"**Debt-to-Income Ratio:** {financials['debt_to_income_ratio']:.2f}%")
+st.markdown(f"**Savings Rate:** {financials['savings_rate']*100:.2f}%")
+st.markdown(f"**Investment Rate:** {financials['investment_rate']*100:.2f}%")
+st.markdown(f"**Emergency Fund (months of expenses):** {financials['emergency_fund']:.2f} months")
+st.markdown(f"**Net Worth:** ${financials['net_worth']:,.2f}")
+
 st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
 st.markdown("<h2>🚀 Financial Projections</h2>", unsafe_allow_html=True)
@@ -182,15 +190,5 @@ for year in projection_years:
     st.markdown(f"💰 Income: **${projection_data[year]['Income']:,.2f}**")
     st.markdown(f"🏦 Savings: **${projection_data[year]['Savings']:,.2f}**")
     st.markdown(f"📈 Investments: **${projection_data[year]['Investments']:,.2f}**")
-
-# --- Visualization: Financial Score Gauge ---
-fig = go.Figure(go.Indicator(
-    mode="gauge+number",
-    value=score,
-    title={'text': "Financial Health Score"},
-    gauge={'axis': {'range': [0, 100]}, 'bar': {'color': grade_color}},
-    domain={'x': [0, 1], 'y': [0, 1]}
-))
-st.plotly_chart(fig)
 
 st.markdown("<h3>🔁 Stay on top of your finances!</h3>", unsafe_allow_html=True)
