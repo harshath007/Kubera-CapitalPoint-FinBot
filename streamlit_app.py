@@ -97,7 +97,79 @@ st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months (Cap: 6 mon
 st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f}`")
 
 # --- Financial Score ---
-st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
+# --- New Financial Score Calculation (Precision to Decimal) ---
+base_score = 100.0
+
+# Debt-to-Income Ratio Impact
+if debt_to_income_ratio > 50:
+    base_score -= (debt_to_income_ratio - 50) * 0.3  # Heavier penalty over 50%
+elif debt_to_income_ratio < 20:
+    base_score += (20 - debt_to_income_ratio) * 0.1  # Small reward under 20%
+
+# Savings Rate Impact
+if savings_rate < 0.15:
+    base_score -= (15 - savings_rate * 100) * 0.2  # Strong penalty if below 15%
+elif savings_rate > 25:
+    base_score += (savings_rate * 100 - 25) * 0.15  # Bonus if above 25%
+
+# Investment Rate Impact
+if investment_rate < 0.2:
+    base_score -= (20 - investment_rate * 100) * 0.15  # Penalty for low investment rate
+elif investment_rate > 30:
+    base_score += (investment_rate * 100 - 30) * 0.12  # Bonus for aggressive investing
+
+# Emergency Fund Impact (Capped at 6 months)
+if emergency_fund < 3:
+    base_score -= (3 - emergency_fund) * 2.5  # Severe penalty if below 3 months
+elif emergency_fund > 6:
+    base_score += min(emergency_fund - 6, 6) * 1.2  # Small bonus for extra security
+
+# Credit Score Impact (Fine-Tuned Brackets)
+if credit_score < 600:
+    base_score -= (600 - credit_score) * 0.08  # Steeper penalty below 600
+elif credit_score > 750:
+    base_score += (credit_score - 750) * 0.05  # Bonus for excellent credit
+
+# No Debt Bonus
+if debt == 0:
+    base_score += 5.0  # Reward for no debt
+
+# Income Impact (Relative to National Median)
+if income > 6000:
+    base_score += (income - 6000) * 0.001  # Small boost for high earners
+elif income < 3500:
+    base_score -= (3500 - income) * 0.002  # Penalty for low earnings
+
+# National Comparison Adjustments
+if savings > national_avg_savings:
+    base_score += 2.5
+else:
+    base_score -= 2.5
+
+if debt < national_avg_debt:
+    base_score += 2.0
+else:
+    base_score -= 2.0
+
+if credit_score > national_avg_credit:
+    base_score += 1.5
+else:
+    base_score -= 1.5
+
+# Ensure score is between 0.00 and 100.00
+final_score = round(max(0.00, min(100.00, base_score)), 2)
+
+# Assign grade color
+if final_score > 85:
+    grade_color = "green"
+elif final_score > 60:
+    grade_color = "yellow"
+else:
+    grade_color = "red"
+
+# Display New Financial Score
+st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {final_score}/100.00</p>", unsafe_allow_html=True)
+
 
 # --- National Standing Report ---
 st.subheader("📌 National Standing Report")
