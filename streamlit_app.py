@@ -32,9 +32,9 @@ age = st.sidebar.number_input("🎂 Age:", min_value=0, max_value=100, step=1)
 credit_score = st.sidebar.slider("📊 Credit Score (300-850):", min_value=300, max_value=850, value=700)
 
 st.sidebar.header("🧾 Tax Rates")
-federal_tax = st.sidebar.slider("🇺🇸 Federal Tax Rate (%)", 0, 50, 15)
-state_tax = st.sidebar.slider("🏛 State Tax Rate (%)", 0, 15, 5)
-local_tax = st.sidebar.slider("🏙 Local Tax Rate (%)", 0, 10, 3)
+federal_tax = st.sidebar.slider("Federal Tax Rate (%)", 0, 50, 15)
+state_tax = st.sidebar.slider("State Tax Rate (%)", 0, 15, 5)
+local_tax = st.sidebar.slider("Local Tax Rate (%)", 0, 10, 3)
 
 # --- Financial Calculations ---
 net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
