@@ -1,133 +1,124 @@
-import numpy as np
 import streamlit as st
+import numpy as np
 import math
+import plotly.express as px
+import plotly.graph_objects as go
 
-def get_percentile(user_value, national_average, national_std_dev):
-    """Calculate the percentile ranking of the user's value compared to national data."""
-    if national_std_dev == 0:
-        return 50  # If there's no variation, assume user is average
-    z_score = (user_value - national_average) / national_std_dev
-    percentile = round(100 * (1 - 0.5 * (1 + math.erf(z_score / math.sqrt(2)))), 2)
-    return max(1, min(100, percentile))  # Ensure percentile stays between 1 and 100
+# --- Page Configuration ---
+st.set_page_config(page_title="Finance Advisor", page_icon="💰", layout="wide")
 
-def financial_report():
-    st.set_page_config(page_title="Finance Advisor", page_icon="💰", layout="centered")
-    st.title("💰 Finance Advisor")
+# --- Custom Styling ---
+st.markdown("""
+    <style>
+        .main { background-color: #111; color: #fff; }
+        div.block-container { padding: 2rem; }
+        .stButton>button { width: 100%; }
+        h1, h2, h3 { text-align: center; color: #FFD700; }
+    </style>
+""", unsafe_allow_html=True)
 
-    st.sidebar.header("User Input")
+# --- Header ---
+st.markdown("<h1>💰 Finance Advisor</h1>", unsafe_allow_html=True)
+st.markdown("<h3>Your Personal Financial Dashboard</h3>", unsafe_allow_html=True)
+
+# --- Sidebar (User Inputs) ---
+st.sidebar.header("📊 User Input")
+income = st.sidebar.number_input("💵 Monthly Income (Before Taxes): $", min_value=0.0, format="%.2f")
+expenses = st.sidebar.number_input("💸 Monthly Expenses: $", min_value=0.0, format="%.2f")
+savings = st.sidebar.number_input("🏦 Total Savings: $", min_value=0.0, format="%.2f")
+investments = st.sidebar.number_input("📈 Total Investments: $", min_value=0.0, format="%.2f")
+debt = st.sidebar.number_input("💳 Current Debt ($):", min_value=0.0, format="%.2f")
+age = st.sidebar.number_input("🎂 Age:", min_value=0, max_value=100, step=1)
+credit_score = st.sidebar.slider("📊 Credit Score (300-850):", min_value=300, max_value=850, value=700)
+
+st.sidebar.header("🧾 Tax Rates")
+federal_tax = st.sidebar.slider("🇺🇸 Federal Tax Rate (%)", 0, 50, 15)
+state_tax = st.sidebar.slider("🏛 State Tax Rate (%)", 0, 15, 5)
+local_tax = st.sidebar.slider("🏙 Local Tax Rate (%)", 0, 10, 3)
+
+# --- Financial Calculations ---
+net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
+net_worth = savings + investments - debt
+debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
+savings_rate = (savings / (income * 12)) if income > 0 else 0
+investment_rate = (investments / (income * 12)) if income > 0 else 0
+emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
+
+# --- Financial Advice ---
+def get_advice():
+    advice = []
+    if debt_to_income_ratio > 40:
+        advice.append("⚠️ Your Debt-to-Income Ratio is high! Consider reducing debt.")
+    if savings_rate < 0.15:
+        advice.append("📉 Your savings rate is below the recommended 15%. Try increasing it.")
+    if emergency_fund < 3:
+        advice.append("🛑 Your emergency fund is below 3 months of expenses. Consider increasing it.")
+    if investment_rate < 0.2:
+        advice.append("💡 You're investing less than 20%. Consider increasing investments for long-term growth.")
     
-    # User inputs with validation
-    income = st.sidebar.number_input("Monthly Income (Before Taxes): $", min_value=0.0, format="%.2f")
-    expenses = st.sidebar.number_input("Monthly Expenses: $", min_value=0.0, format="%.2f")
-    savings = st.sidebar.number_input("Total Savings: $", min_value=0.0, format="%.2f")
-    investments = st.sidebar.number_input("Total Investments: $", min_value=0.0, format="%.2f")
-    age = st.sidebar.number_input("Age: ", min_value=0)
-    
-    st.sidebar.markdown("**Tax Rates**")
-    federal_tax = st.sidebar.number_input("Federal Tax Rate (%)", min_value=0.0, max_value=100.0)
-    state_tax = st.sidebar.number_input("State Tax Rate (%)", min_value=0.0, max_value=100.0)
-    local_tax = st.sidebar.number_input("Local Tax Rate (%)", min_value=0.0, max_value=100.0)
-    
-    credit_score = st.sidebar.number_input("Credit Score (300-850):", min_value=300, max_value=850)
+    return advice if advice else ["✅ Your finances are in great shape! Keep it up!"]
 
-    st.sidebar.markdown("**Financial Information**")
-    debt = st.sidebar.number_input("Current Debt ($):", min_value=0.0, format="%.2f")
+advice = get_advice()
 
-    # National averages and standard deviations for comparison
-    national_averages = {
-        "income": 5000, "expenses": 3500, "savings": 25000, "investments": 40000,
-        "credit_score": 710, "net_worth": 100000, "debt": 20000, "emergency_fund": 15000,
-        "savings_rate": 0.15, "investment_rate": 0.2
-    }
-    national_std_dev = {
-        "income": 2000, "expenses": 1500, "savings": 15000, "investments": 30000,
-        "credit_score": 40, "net_worth": 50000, "debt": 10000, "emergency_fund": 8000,
-        "savings_rate": 0.1, "investment_rate": 0.1
-    }
+# --- Display Financial Overview ---
+st.subheader("📊 Your Financial Overview")
+st.markdown(f"**💰 Net Monthly Income:** `${net_income:,.2f}`")
+st.markdown(f"**📈 Net Worth:** `${net_worth:,.2f}`")
+st.markdown(f"**💳 Debt-to-Income Ratio:** `{debt_to_income_ratio:.2f}%`")
+st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months of expenses")
 
-    # Financial Calculations
-    net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
-    net_worth = savings + investments
-    
-    # Prevent division by zero
-    debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
-    savings_rate = (savings / (income * 12)) if income > 0 else 0
-    investment_rate = (investments / (income * 12)) if income > 0 else 0
-    emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
+st.subheader("📌 Personalized Financial Advice")
+for tip in advice:
+    st.markdown(f"- {tip}")
 
-    # Percentile Calculations
-    percentiles = {
-        "income": get_percentile(income, national_averages["income"], national_std_dev["income"]),
-        "expenses": get_percentile(expenses, national_averages["expenses"], national_std_dev["expenses"]),
-        "savings": get_percentile(savings, national_averages["savings"], national_std_dev["savings"]),
-        "investments": get_percentile(investments, national_averages["investments"], national_std_dev["investments"]),
-        "credit_score": get_percentile(credit_score, national_averages["credit_score"], national_std_dev["credit_score"]),
-        "net_worth": get_percentile(net_worth, national_averages["net_worth"], national_std_dev["net_worth"]),
-        "debt": get_percentile(debt, national_averages["debt"], national_std_dev["debt"]),
-        "emergency_fund": get_percentile(emergency_fund, national_averages["emergency_fund"], national_std_dev["emergency_fund"]),
-        "savings_rate": get_percentile(savings_rate, national_averages["savings_rate"], national_std_dev["savings_rate"]),
-        "investment_rate": get_percentile(investment_rate, national_averages["investment_rate"], national_std_dev["investment_rate"])
-    }
+# --- Data Visualization ---
+st.subheader("📊 Financial Distribution")
+fig = go.Figure(data=[go.Pie(
+    labels=["Savings", "Investments", "Debt"],
+    values=[savings, investments, debt],
+    hole=0.4
+)])
+fig.update_layout(showlegend=True, width=600, height=400)
+st.plotly_chart(fig, use_container_width=True)
 
-    # Age-based comparison
-    national_net_worth_by_age = {20: 5000, 30: 35000, 40: 80000, 50: 150000, 60: 250000}
-    closest_age = min(national_net_worth_by_age.keys(), key=lambda x: abs(x - age))
-    age_comparison = get_percentile(net_worth, national_net_worth_by_age[closest_age], national_std_dev["net_worth"])
+# --- Financial Projections ---
+def forecast_years(years):
+    """Predict financial growth over time."""
+    income_growth = 0.03
+    savings_growth = 0.15
+    investment_growth = 0.06
+    debt_reduction = 0.05
+    credit_score_improvement = 5
 
-    # Financial Predictions (2, 5, 10 years)
-    income_growth_rate = 0.03  
-    savings_growth_rate = 0.15  
-    investment_growth_rate = 0.06  
-    debt_reduction_rate = 0.05  
-    credit_score_improvement = 5  
+    future_income = income * ((1 + income_growth) ** years)
+    future_savings = savings + (net_income * savings_growth * 12 * years)
+    future_investments = investments * ((1 + investment_growth) ** years)
+    future_debt = debt * ((1 - debt_reduction) ** years)
+    future_credit_score = min(850, credit_score + (credit_score_improvement * years))
+    future_net_worth = future_savings + future_investments - future_debt
 
-    def forecast_years(years):
-        """Forecast the financial situation in the future (2, 5, 10 years)."""
-        future_income = income * ((1 + income_growth_rate) ** years)
-        future_savings = savings + (net_income * savings_growth_rate * 12 * years)
-        future_investments = investments * ((1 + investment_growth_rate) ** years)
-        future_debt = debt * ((1 - debt_reduction_rate) ** years)
-        future_credit_score = credit_score + (credit_score_improvement * years)
-        future_net_worth = future_savings + future_investments - future_debt
-
-        # Prevent division by zero for future emergency fund calculation
-        future_emergency_fund = future_savings / (expenses / 12) if expenses > 0 else float('inf')
-
-        return {
-            "future_income": future_income,
-            "future_savings": future_savings,
-            "future_investments": future_investments,
-            "future_debt": future_debt,
-            "future_credit_score": future_credit_score,
-            "future_net_worth": future_net_worth,
-            "future_emergency_fund": future_emergency_fund
-        }
-
-    projections = {
-        "2_years": forecast_years(2),
-        "5_years": forecast_years(5),
-        "10_years": forecast_years(10)
+    return {
+        "Income": future_income,
+        "Savings": future_savings,
+        "Investments": future_investments,
+        "Debt": future_debt,
+        "Net Worth": future_net_worth,
+        "Credit Score": future_credit_score
     }
 
-    st.subheader("Your Financial Overview")
-    st.markdown(f"**Net Monthly Income**: ${net_income:,.2f}")
-    st.markdown(f"**Net Worth**: ${net_worth:,.2f}")
-    st.markdown(f"**Emergency Fund**: {emergency_fund:.2f} months of expenses")
-    st.markdown(f"**Debt-to-Income Ratio**: {debt_to_income_ratio:.2f}%")
-    
-    st.subheader("Percentiles Comparison")
-    st.write("Here’s how your financial situation compares to the national averages:")
-    for key, percentile in percentiles.items():
-        st.write(f"{key.capitalize()}: **{percentile}th percentile**")
-    
-    st.write(f"**Your net worth compared to your age group**: {age_comparison}th percentile")
+st.subheader("🚀 Financial Projections")
+projection_years = [2, 5, 10]
+projection_data = {year: forecast_years(year) for year in projection_years}
 
-    st.subheader("Financial Projections")
-    for period, data in projections.items():
-        st.markdown(f"### In {period.replace('_', ' ').capitalize()}:")
-        for key, value in data.items():
-            st.markdown(f"**{key.replace('_', ' ').capitalize()}**: {value:,.2f}")
+for year in projection_years:
+    st.markdown(f"### 📅 In {year} years:")
+    st.markdown(f"- **💰 Income:** `${projection_data[year]['Income']:,.2f}`")
+    st.markdown(f"- **🏦 Savings:** `${projection_data[year]['Savings']:,.2f}`")
+    st.markdown(f"- **📈 Investments:** `${projection_data[year]['Investments']:,.2f}`")
+    st.markdown(f"- **💳 Debt:** `${projection_data[year]['Debt']:,.2f}`")
+    st.markdown(f"- **📊 Net Worth:** `${projection_data[year]['Net Worth']:,.2f}`")
+    st.markdown(f"- **🏆 Credit Score:** `{projection_data[year]['Credit Score']}`")
 
-if __name__ == "__main__":
-    financial_report()
+st.markdown("---")
+st.markdown("<h3>🔁 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
 
