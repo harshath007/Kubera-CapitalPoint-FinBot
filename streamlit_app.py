@@ -104,7 +104,7 @@ st.subheader("📌 National Standing Report (Lower is Better)")
 st.markdown(f"- **Income Percentile:** {income_percentile:.0f}th")
 st.markdown(f"- **Savings Percentile:** {savings_percentile:.0f}th")
 st.markdown(f"- **Investments Percentile:** {investment_percentile:.0f}th")
-st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th")
+st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th (Higher is Better)")
 st.markdown(f"- **Credit Score Percentile:** {credit_percentile:.0f}th")
 
 # --- Data Visualization ---
