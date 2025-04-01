@@ -22,7 +22,7 @@ st.markdown("<h3>Your Personal Financial Dashboard</h3>", unsafe_allow_html=True
 
 # --- Sidebar (User Inputs) ---
 st.sidebar.header("📊 User Input")
-income = st.sidebar.number_input("💵 Monthly Income (Before Taxes): $", min_value=0.0, format="%.2f")
+income = st.sidebar.number_input("💵 Monthly Income (Before Taxes): $", min_value=0.01, format="%.2f")
 expenses = st.sidebar.number_input("💸 Monthly Expenses (Including Taxes): $", min_value=0.0, format="%.2f")
 savings = st.sidebar.number_input("🏦 Total Savings: $", min_value=0.0, format="%.2f")
 investments = st.sidebar.number_input("📈 Total Investments: $", min_value=0.0, format="%.2f")
@@ -37,45 +37,32 @@ state_tax = st.sidebar.slider("State Tax Rate (%)", 0, 50, 5)
 local_tax = st.sidebar.slider("Local Tax Rate (%)", 0, 50, 3)
 
 # --- Financial Calculations ---
-net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
+total_tax_rate = (federal_tax + state_tax + local_tax) / 100
+net_income = income * (1 - total_tax_rate)
 net_worth = assets + savings + investments - debt
 debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
 savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
 
-# --- Emergency Fund Calculation (Capped at 6 Months) ---
-emergency_fund_cap = 6  # Max 6 months of expenses
-emergency_fund = min(savings / (expenses / 12), emergency_fund_cap) if expenses > 0 else float('inf')
-
-# Only allocate a portion of savings if not at the cap
+# --- Emergency Fund Calculation ---
+emergency_fund_cap = 6
+emergency_fund = (savings / (expenses / 12)) if expenses > 0 else float('inf')
+emergency_fund = min(emergency_fund, emergency_fund_cap)
 needed_savings_for_fund = max(0, (expenses / 12) * emergency_fund_cap - savings)
-if needed_savings_for_fund > 0:
-    savings_contribution = min(needed_savings_for_fund * 0.3, savings)  # 30% of needed amount
-else:
-    savings_contribution = 0
+savings_contribution = min(needed_savings_for_fund * 0.3, savings) if needed_savings_for_fund > 0 else 0
 
-# --- National Percentile Report (Based on Age) ---
-# (Fake percentiles for now, replace with real data later)
-income_percentile = np.interp(income, [20000, 100000, 250000], [30, 70, 95])
-savings_percentile = np.interp(savings, [5000, 50000, 200000], [25, 60, 90])
-investment_percentile = np.interp(investments, [1000, 50000, 150000], [20, 65, 85])
-debt_percentile = np.interp(debt, [0, 20000, 100000], [90, 50, 20])  # Inverse scale (low debt = high score)
-credit_percentile = np.interp(credit_score, [500, 700, 800], [20, 60, 90])
-
-# --- Financial Grading System (0-100) ---
-score = 100  
+# --- Financial Score Calculation ---
+score = 100
 if debt_to_income_ratio > 40:
-    score -= 15  
+    score -= 15
 if savings_rate < 0.15:
-    score -= 10  
+    score -= 10
 if emergency_fund < 3:
-    score -= 5  
+    score -= 5
 if investment_rate < 0.2:
-    score -= 10  
+    score -= 10
 if credit_score < 600:
-    score -= 10  
-
-# Bonuses for good financial habits
+    score -= 10
 if credit_score > 750:
     score += 5
 if debt == 0:
@@ -84,9 +71,7 @@ if savings_rate > 0.3:
     score += 5
 if investment_rate > 0.25:
     score += 5
-
-score = max(0, min(score, 100))  # Ensure score stays in 0-100 range
-grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
+score = max(0, min(score, 100))
 
 # --- Display Financial Overview ---
 st.subheader("📊 Your Financial Overview")
@@ -96,163 +81,19 @@ st.markdown(f"**💳 Debt-to-Income Ratio:** `{debt_to_income_ratio:.2f}%`")
 st.markdown(f"**🚨 Emergency Fund:** `{emergency_fund:.2f}` months (Cap: 6 months)")
 st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f}`")
 
-# --- New Financial Score Calculation (Precision to Decimal) ---
-base_score = 100.0
+# --- Display Financial Score ---
+st.markdown(f"<p class='score'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
-# Debt-to-Income Ratio Impact
-if debt_to_income_ratio > 50:
-    base_score -= (debt_to_income_ratio - 50) * 0.3  # Heavier penalty over 50%
-elif debt_to_income_ratio < 20:
-    base_score += (20 - debt_to_income_ratio) * 0.1  # Small reward under 20%
-
-# Savings Rate Impact
-if savings_rate < 0.15:
-    base_score -= (15 - savings_rate * 100) * 0.2  # Strong penalty if below 15%
-elif savings_rate > 25:
-    base_score += (savings_rate * 100 - 25) * 0.15  # Bonus if above 25%
-
-# Investment Rate Impact
-if investment_rate < 0.2:
-    base_score -= (20 - investment_rate * 100) * 0.15  # Penalty for low investment rate
-elif investment_rate > 30:
-    base_score += (investment_rate * 100 - 30) * 0.12  # Bonus for aggressive investing
-
-# Emergency Fund Impact (Capped at 6 months)
-if emergency_fund < 3:
-    base_score -= (3 - emergency_fund) * 2.5  # Severe penalty if below 3 months
-elif emergency_fund > 6:
-    base_score += min(emergency_fund - 6, 6) * 1.2  # Small bonus for extra security
-
-# Credit Score Impact (Fine-Tuned Brackets)
-if credit_score < 600:
-    base_score -= (600 - credit_score) * 0.08  # Steeper penalty below 600
-elif credit_score > 750:
-    base_score += (credit_score - 750) * 0.05  # Bonus for excellent credit
-
-# No Debt Bonus
-if debt == 0:
-    base_score += 5.0  # Reward for no debt
-
-# Income Impact (Relative to National Median)
-if income > 6000:
-    base_score += (income - 6000) * 0.001  # Small boost for high earners
-elif income < 3500:
-    base_score -= (3500 - income) * 0.002  # Penalty for low earnings
-
-# National Comparison Adjustments
-if savings > national_avg_savings:
-    base_score += 2.5
-else:
-    base_score -= 2.5
-
-if debt < national_avg_debt:
-    base_score += 2.0
-else:
-    base_score -= 2.0
-
-if credit_score > national_avg_credit:
-    base_score += 1.5
-else:
-    base_score -= 1.5
-
-# Ensure score is between 0.00 and 100.00
-final_score = round(max(0.00, min(100.00, base_score)), 2)
-
-# Assign grade color
-if final_score > 85:
-    grade_color = "green"
-elif final_score > 60:
-    grade_color = "yellow"
-else:
-    grade_color = "red"
-
-# Display New Financial Score
-st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {final_score}/100.00</p>", unsafe_allow_html=True)
-
-
-# --- National Financial Averages (Approximate US Data) ---
-national_avg_income = 65000 / 12  # Monthly income ($65K per year)
-national_avg_savings = 6000        # Average total savings
-national_avg_investments = 20000    # Average investments
-national_avg_debt = 9000            # Average personal debt
-national_avg_credit = 715           # Average credit score
-
-# --- Ensure user inputs exist before calculations ---
-if income is None: income = 0
-if savings is None: savings = 0
-if investments is None: investments = 0
-if debt is None: debt = 0
-if credit_score is None: credit_score = 300  # Minimum credit score
-
-# --- National Financial Score Adjustment ---
-base_score = 100.0
-
-# Adjust score based on national comparisons
-if savings > national_avg_savings:
-    base_score += 2.5
-else:
-    base_score -= 2.5
-
-if debt < national_avg_debt:
-    base_score += 2.0
-else:
-    base_score -= 2.0
-
-if credit_score > national_avg_credit:
-    base_score += 1.5
-else:
-    base_score -= 1.5
-
-# Ensure score is between 0.00 and 100.00
-final_score = round(max(0.00, min(100.00, base_score)), 2)
-
-# Assign grade color
-if final_score > 85:
-    grade_color = "green"
-elif final_score > 60:
-    grade_color = "yellow"
-else:
-    grade_color = "red"
-
-# Display Financial Score
-st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {final_score}/100.00</p>", unsafe_allow_html=True)
-
-
-# --- Percentile Calculations ---
-def calculate_percentile(user_value, national_avg):
-    """
-    Calculates the approximate percentile ranking compared to the national average.
-    Ensures the result stays between 0 and 100.
-    """
-    if national_avg == 0:
-        return 50  # Default percentile if no valid comparison exists
-    return min(100, max(0, (user_value / national_avg) * 50 + 50))  # Normalized scale
-
-income_percentile = calculate_percentile(income * 12, national_avg_income * 12)
-savings_percentile = calculate_percentile(savings, national_avg_savings)
-investment_percentile = calculate_percentile(investments, national_avg_investments)
-debt_percentile = 100 - calculate_percentile(debt, national_avg_debt)  # Lower debt is better
-credit_percentile = calculate_percentile(credit_score, national_avg_credit)
-
-# --- National Standing Report ---
-st.subheader("📌 National Standing Report")
-st.markdown(f"- **Income Percentile:** `{income_percentile:.1f}th`")
-st.markdown(f"- **Savings Percentile:** `{savings_percentile:.1f}th`")
-st.markdown(f"- **Investments Percentile:** `{investment_percentile:.1f}th`")
-st.markdown(f"- **Debt Percentile:** `{debt_percentile:.1f}th` (Lower is better)")
-st.markdown(f"- **Credit Score Percentile:** `{credit_percentile:.1f}th`")
-
-# --- Optional: Visual Representation ---
+# --- National Comparison ---
 st.subheader("📊 National Comparison")
-comparison_fig = go.Figure()
-comparison_fig.add_trace(go.Bar(
-    x=["Income", "Savings", "Investments", "Debt", "Credit Score"],
-    y=[income_percentile, savings_percentile, investment_percentile, debt_percentile, credit_percentile],
-    marker_color=["blue", "green", "orange", "red", "purple"]
-))
-comparison_fig.update_layout(yaxis=dict(range=[0, 100]), title="Your Financial Percentile vs National Average")
-st.plotly_chart(comparison_fig, use_container_width=True)
+st.markdown("This section can be updated with real percentile data.")
 
+# --- Visual Representation ---
+st.subheader("📊 Financial Data Chart")
+fig = go.Figure()
+fig.add_trace(go.Bar(x=["Income", "Savings", "Investments", "Debt"], y=[income, savings, investments, debt], marker_color=["blue", "green", "orange", "red"]))
+fig.update_layout(title="Your Financial Data", yaxis=dict(title="Amount ($)"))
+st.plotly_chart(fig, use_container_width=True)
 
 # --- Financial Projections ---
 def forecast_years(years):
@@ -285,13 +126,12 @@ projection_data = {year: forecast_years(year) for year in projection_years}
 
 for year in projection_years:
     st.markdown(f"### 📅 In {year} years:")
-    st.markdown(f"- **💰 Income:** `${projection_data[year]['Income']:,.2f}`")
-    st.markdown(f"- **🏦 Savings:** `${projection_data[year]['Savings']:,.2f}`")
-    st.markdown(f"- **📈 Investments:** `${projection_data[year]['Investments']:,.2f}`")
-    st.markdown(f"- **💳 Debt:** `${projection_data[year]['Debt']:,.2f}`")
-    st.markdown(f"- **📊 Net Worth:** `${projection_data[year]['Net Worth']:,.2f}`")
-    st.markdown(f"- **🏆 Credit Score:** `{projection_data[year]['Credit Score']}`")
+    st.markdown(f"- **💰 Income:** ${projection_data[year]['Income']:,.2f}")
+    st.markdown(f"- **🏦 Savings:** ${projection_data[year]['Savings']:,.2f}")
+    st.markdown(f"- **📈 Investments:** ${projection_data[year]['Investments']:,.2f}")
+    st.markdown(f"- **💳 Debt:** ${projection_data[year]['Debt']:,.2f}")
+    st.markdown(f"- **📊 Net Worth:** ${projection_data[year]['Net Worth']:,.2f}")
+    st.markdown(f"- **🏆 Credit Score:** {projection_data[year]['Credit Score']}")
 
 st.markdown("---")
-st.markdown("<h3>🔁 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
-
+st.markdown("<h3>🔄 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
