@@ -99,7 +99,7 @@ for tip in advice:
     st.markdown(f"- {tip}")
 
 # --- National Comparison Report (Percentiles) ---
-st.subheader("📈 National Comparison Report (Lower is better)")
+st.subheader("📈 National Comparison Report")
 
 # National Data
 national_avg_savings = 6000
@@ -119,7 +119,7 @@ debt_percentile = calculate_percentile(debt, national_avg_debt, is_debt=True)
 credit_score_percentile = calculate_percentile(credit_score, national_avg_credit)
 
 comparison_report = f"""
-- **Savings:** You have `{savings:,.2f}`. Your savings are at the `{savings_percentile}th` percentile in the U.S.
+- **Savings:** You have `{savings:,.2f}`. Your savings are at the `{savings_percentile}th` percentile in the U.S. (Lower is worse)
 - **Income:** Your income is `${income:,.2f}`. Your income is at the `{income_percentile}th` percentile in the U.S.
 - **Debt:** Your debt is `${debt:,.2f}`. Your debt is at the `{debt_percentile}th` percentile in the U.S. (Higher is worse)
 - **Credit Score:** Your score is `{credit_score}`. Your credit score is at the `{credit_score_percentile}th` percentile in the U.S.
