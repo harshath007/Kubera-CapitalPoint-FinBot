@@ -24,7 +24,7 @@ st.markdown("<h3>Your Personal Financial Dashboard</h3>", unsafe_allow_html=True
 # --- Sidebar (User Inputs) ---
 st.sidebar.header("📊 User Input")
 income = st.sidebar.number_input("💵 Monthly Income (Before Taxes): $", min_value=0.0, format="%.2f")
-expenses = st.sidebar.number_input("💸 Monthly Expenses: $", min_value=0.0, format="%.2f")
+expenses = st.sidebar.number_input("💸 Monthly Expenses(Including Taxes): $", min_value=0.0, format="%.2f")
 savings = st.sidebar.number_input("🏦 Total Savings: $", min_value=0.0, format="%.2f")
 investments = st.sidebar.number_input("📈 Total Investments: $", min_value=0.0, format="%.2f")
 debt = st.sidebar.number_input("💳 Current Debt ($):", min_value=0.0, format="%.2f")
