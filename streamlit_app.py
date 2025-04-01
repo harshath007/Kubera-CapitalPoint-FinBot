@@ -44,12 +44,25 @@ savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
 
 # --- Emergency Fund Calculation (Capped at 6 Months) ---
-emergency_fund_cap = 6  
+emergency_fund_cap = 6  # Max 6 months of expenses
 emergency_fund = min(savings / (expenses / 12), emergency_fund_cap) if expenses > 0 else float('inf')
-needed_savings_for_fund = max(0, (expenses / 12) * emergency_fund_cap - savings)
-savings_contribution = min(needed_savings_for_fund * 0.3, savings) if needed_savings_for_fund > 0 else 0
 
-# --- Financial Score Calculation ---
+# Only allocate a portion of savings if not at the cap
+needed_savings_for_fund = max(0, (expenses / 12) * emergency_fund_cap - savings)
+if needed_savings_for_fund > 0:
+    savings_contribution = min(needed_savings_for_fund * 0.3, savings)  # 30% of needed amount
+else:
+    savings_contribution = 0
+
+# --- National Percentile Report (Based on Age) ---
+# (Fake percentiles for now, replace with real data later)
+income_percentile = np.interp(income, [20000, 100000, 250000], [30, 70, 95])
+savings_percentile = np.interp(savings, [5000, 50000, 200000], [25, 60, 90])
+investment_percentile = np.interp(investments, [1000, 50000, 150000], [20, 65, 85])
+debt_percentile = np.interp(debt, [0, 20000, 100000], [90, 50, 20])  # Inverse scale (low debt = high score)
+credit_percentile = np.interp(credit_score, [500, 700, 800], [20, 60, 90])
+
+# --- Financial Grading System (0-100) ---
 score = 100  
 if debt_to_income_ratio > 40:
     score -= 15  
@@ -62,6 +75,7 @@ if investment_rate < 0.2:
 if credit_score < 600:
     score -= 10  
 
+# Bonuses for good financial habits
 if credit_score > 750:
     score += 5
 if debt == 0:
@@ -71,10 +85,10 @@ if savings_rate > 0.3:
 if investment_rate > 0.25:
     score += 5
 
-score = max(0, min(score, 100))  
+score = max(0, min(score, 100))  # Ensure score stays in 0-100 range
 grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
 
-# --- Financial Overview ---
+# --- Display Financial Overview ---
 st.subheader("📊 Your Financial Overview")
 st.markdown(f"**💰 Net Monthly Income:** `${net_income:,.2f}`")
 st.markdown(f"**📈 Net Worth:** `${net_worth:,.2f}`")
@@ -85,7 +99,15 @@ st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f
 # --- Financial Score ---
 st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
-# --- Financial Distribution Chart ---
+# --- National Standing Report ---
+st.subheader("📌 National Standing Report")
+st.markdown(f"- **Income Percentile:** {income_percentile:.0f}th")
+st.markdown(f"- **Savings Percentile:** {savings_percentile:.0f}th")
+st.markdown(f"- **Investments Percentile:** {investment_percentile:.0f}th")
+st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th (Lower is better)")
+st.markdown(f"- **Credit Score Percentile:** {credit_percentile:.0f}th")
+
+# --- Data Visualization ---
 st.subheader("📊 Financial Distribution")
 fig = go.Figure(data=[go.Pie(
     labels=["Savings", "Investments", "Debt"],
@@ -95,40 +117,6 @@ fig = go.Figure(data=[go.Pie(
 fig.update_layout(showlegend=True, width=600, height=400)
 st.plotly_chart(fig, use_container_width=True)
 
-# --- National Comparison Report ---
-st.subheader("📈 National Comparison Report")
-national_avg_savings = 6000  
-national_avg_income = 4500  
-national_avg_debt = 30000  
-national_avg_credit = 710  
-
-comparison_report = f"""
-- **Savings:** You have `{savings:,.2f}`. The U.S. average is `${national_avg_savings:,.2f}`.
-- **Income:** Your income is `${income:,.2f}`. The U.S. median is `${national_avg_income:,.2f}`.
-- **Debt:** Your debt is `${debt:,.2f}`. The U.S. average is `${national_avg_debt:,.2f}`.
-- **Credit Score:** Your score is `{credit_score}`. The U.S. average is `{national_avg_credit}`.
-"""
-st.markdown(comparison_report)
-
-# --- Financial Advice ---
-st.subheader("📌 Personalized Financial Advice")
-advice = []
-if debt_to_income_ratio > 40:
-    advice.append("⚠️ Your Debt-to-Income Ratio is **high!** Reduce debt.")
-if savings_rate < 0.15:
-    advice.append("📉 Increase your savings to at least **15%** of your income.")
-if emergency_fund < 3:
-    advice.append("🚨 Build up at least **3 months of savings** for emergencies.")
-if investment_rate < 0.2:
-    advice.append("📈 Increase your **investments** for long-term security.")
-if credit_score < 600:
-    advice.append("📉 Improve your **credit score** to access better financial options.")
-
-if not advice:
-    advice.append("✅ Your finances are in **great shape!** Keep up the good work!")
-
-for tip in advice:
-    st.markdown(f"- {tip}")
-
 st.markdown("---")
 st.markdown("<h3>🔁 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
+
