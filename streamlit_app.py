@@ -100,11 +100,11 @@ st.markdown(f"**💾 Emergency Fund Contribution:** `${savings_contribution:,.2f
 st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score: {score}/100</p>", unsafe_allow_html=True)
 
 # --- National Standing Report ---
-st.subheader("📌 National Standing Report")
+st.subheader("📌 National Standing Report (Lower is Better)")
 st.markdown(f"- **Income Percentile:** {income_percentile:.0f}th")
 st.markdown(f"- **Savings Percentile:** {savings_percentile:.0f}th")
 st.markdown(f"- **Investments Percentile:** {investment_percentile:.0f}th")
-st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th (Lower is better)")
+st.markdown(f"- **Debt Percentile:** {debt_percentile:.0f}th")
 st.markdown(f"- **Credit Score Percentile:** {credit_percentile:.0f}th")
 
 # --- Data Visualization ---
