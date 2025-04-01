@@ -2,14 +2,8 @@
   "version": 2,
   "builds": [
     {
-      "src": "Dockerfile",
-      "use": "@vercel/docker"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
+      "src": "streamlit_app.py",
+      "use": "@vercel/python"
     }
   ]
 }
