@@ -117,5 +117,44 @@ fig = go.Figure(data=[go.Pie(
 fig.update_layout(showlegend=True, width=600, height=400)
 st.plotly_chart(fig, use_container_width=True)
 
+
+# --- Financial Projections ---
+def forecast_years(years):
+    """Predict financial growth over time."""
+    income_growth = 0.03
+    savings_growth = 0.15
+    investment_growth = 0.06
+    debt_reduction = 0.05
+    credit_score_improvement = 5
+
+    future_income = income * ((1 + income_growth) ** years)
+    future_savings = savings + (net_income * savings_growth * 12 * years)
+    future_investments = investments * ((1 + investment_growth) ** years)
+    future_debt = debt * ((1 - debt_reduction) ** years)
+    future_credit_score = min(850, credit_score + (credit_score_improvement * years))
+    future_net_worth = future_savings + future_investments - future_debt
+
+    return {
+        "Income": future_income,
+        "Savings": future_savings,
+        "Investments": future_investments,
+        "Debt": future_debt,
+        "Net Worth": future_net_worth,
+        "Credit Score": future_credit_score
+    }
+
+st.subheader("🚀 Financial Projections")
+projection_years = [2, 5, 10]
+projection_data = {year: forecast_years(year) for year in projection_years}
+
+for year in projection_years:
+    st.markdown(f"### 📅 In {year} years:")
+    st.markdown(f"- **💰 Income:** `${projection_data[year]['Income']:,.2f}`")
+    st.markdown(f"- **🏦 Savings:** `${projection_data[year]['Savings']:,.2f}`")
+    st.markdown(f"- **📈 Investments:** `${projection_data[year]['Investments']:,.2f}`")
+    st.markdown(f"- **💳 Debt:** `${projection_data[year]['Debt']:,.2f}`")
+    st.markdown(f"- **📊 Net Worth:** `${projection_data[year]['Net Worth']:,.2f}`")
+    st.markdown(f"- **🏆 Credit Score:** `{projection_data[year]['Credit Score']}`")
+
 st.markdown("---")
 st.markdown("<h3>🔁 Come back anytime to track your progress!</h3>", unsafe_allow_html=True)
