@@ -45,6 +45,54 @@ savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
 emergency_fund = savings / (expenses * 6) if expenses > 0 else float('inf')
 
+# --- Financial Score Calculation ---
+score = 100
+
+# Debt penalties
+if debt_to_income_ratio > 40:
+    score -= 20
+elif debt_to_income_ratio > 30:
+    score -= 15
+elif debt_to_income_ratio > 20:
+    score -= 10
+
+# Savings & Investment impact
+if savings_rate < 0.15:
+    score -= 10
+if investment_rate < 0.2:
+    score -= 10
+
+# Emergency Fund security
+if emergency_fund < 3:
+    score -= 10
+elif emergency_fund < 6:
+    score -= 5
+
+# Age-based adjustments
+if age < 30 and net_worth > 50000:
+    score += 5  # Reward young savers
+elif age > 50 and net_worth < 100000:
+    score -= 10  # Penalize low net worth at later age
+
+# Credit Score impact
+if credit_score < 600:
+    score -= 15
+elif credit_score < 700:
+    score -= 5
+
+# Bonuses for strong financial habits
+if debt == 0:
+    score += 10
+if savings_rate > 0.3:
+    score += 5
+if investment_rate > 0.25:
+    score += 5
+if credit_score > 750:
+    score += 5
+
+score = max(0, min(score, 100))
+grade_color = "green" if score > 75 else "yellow" if score > 50 else "red"
+
 # --- National Averages (U.S. Data for Comparison) ---
 us_avg_net_worth = 120000
 us_avg_savings = 7000
