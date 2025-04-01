@@ -41,9 +41,11 @@ local_tax = st.sidebar.slider("Local Tax Rate (%)", 0, 50, 3)
 # --- Financial Calculations ---
 net_income = income * (1 - (federal_tax + state_tax + local_tax) / 100)
 net_worth = assets + savings + investments - debt
-debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
-savings_rate = (savings / (income * 12)) if income > 0 else 0
-investment_rate = (investments / (income * 12)) if income > 0 else 0
+debt_to_income_ratio = (debt / income * 100) if income > 0 else 0  # Prevent division by zero
+annual_income = income * 12
+savings_rate = (savings / annual_income) if annual_income > 0 else 0
+investment_rate = (investments / annual_income) if annual_income > 0 else 0
+
 
 # --- Emergency Fund Calculation (Capped at 6 Months) ---
 emergency_fund_cap = 6  
@@ -101,11 +103,12 @@ for tip in advice:
 # --- National Comparison Report (Percentiles) ---
 st.subheader("📈 National Comparison Report")
 
-# National Data
-national_avg_savings = 6000
-national_avg_income = 4500
-national_avg_debt = 30000
-national_avg_credit = 710
+# --- National Financial Averages (Approximate US Data) ---
+national_avg_income = 4500  # Monthly income ($54K per year)
+national_avg_savings = 6000  # Average total savings
+national_avg_debt = 30000  # Average personal debt
+national_avg_credit = 710  # Average credit score
+
 
 # Percentile Calculations (lower is worse for savings, higher is worse for debt)
 def calculate_percentile(value, national_avg, is_debt=False):
