@@ -44,6 +44,7 @@ net_worth = assets + savings + investments - debt
 debt_to_income_ratio = (debt / income * 100) if income > 0 else 0
 savings_rate = (savings / (income * 12)) if income > 0 else 0
 investment_rate = (investments / (income * 12)) if income > 0 else 0
+
 # --- Emergency Fund Calculation (Capped at 6 Months) ---
 emergency_fund_cap = 6  
 emergency_fund = min(savings / (expenses / 12), emergency_fund_cap) if expenses > 0 else float('inf')
@@ -96,26 +97,40 @@ st.markdown(f"<p class='score' style='color:{grade_color};'>💯 Financial Score
 st.subheader("📌 Personalized Financial Advice")
 for tip in advice:
     st.markdown(f"- {tip}")
-# --- National Comparison Report ---
+
+# --- National Comparison Report (Percentiles) ---
 st.subheader("📈 National Comparison Report")
-national_avg_savings = 6000  
-national_avg_income = 4500  
-national_avg_debt = 30000  
-national_avg_credit = 710  
+
+# National Data
+national_avg_savings = 6000
+national_avg_income = 4500
+national_avg_debt = 30000
+national_avg_credit = 710
+
+# Percentile Calculations (lower is worse for savings, higher is worse for debt)
+def calculate_percentile(value, national_avg, is_debt=False):
+    if is_debt:
+        return min(100, max(0, 100 - (value / national_avg) * 100))
+    return min(100, max(0, (value / national_avg) * 100))
+
+savings_percentile = calculate_percentile(savings, national_avg_savings)
+income_percentile = calculate_percentile(income, national_avg_income)
+debt_percentile = calculate_percentile(debt, national_avg_debt, is_debt=True)
+credit_score_percentile = calculate_percentile(credit_score, national_avg_credit)
 
 comparison_report = f"""
-- **Savings:** You have `{savings:,.2f}`. The U.S. average is `${national_avg_savings:,.2f}`.
-- **Income:** Your income is `${income:,.2f}`. The U.S. median is `${national_avg_income:,.2f}`.
-- **Debt:** Your debt is `${debt:,.2f}`. The U.S. average is `${national_avg_debt:,.2f}`.
-- **Credit Score:** Your score is `{credit_score}`. The U.S. average is `{national_avg_credit}`.
+- **Savings:** You have `{savings:,.2f}`. Your savings are at the `{savings_percentile}th` percentile in the U.S.
+- **Income:** Your income is `${income:,.2f}`. Your income is at the `{income_percentile}th` percentile in the U.S.
+- **Debt:** Your debt is `${debt:,.2f}`. Your debt is at the `{debt_percentile}th` percentile in the U.S. (Higher debt = worse)
+- **Credit Score:** Your score is `{credit_score}`. Your credit score is at the `{credit_score_percentile}th` percentile in the U.S.
 """
 st.markdown(comparison_report)
 
 # --- Data Visualization ---
 st.subheader("📊 Financial Distribution")
 fig = go.Figure(data=[go.Pie(
-    labels=["Savings", "Investments", "Debt"],
-    values=[savings, investments, debt],
+    labels=["Savings", "Investments", "Debt", "Assets"],
+    values=[savings, investments, debt, assets],
     hole=0.4
 )])
 fig.update_layout(showlegend=True, width=600, height=400)
